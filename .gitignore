@@ -1,0 +1,28 @@
+# TaskTracker generated files
+.tasktracker/reports/
+.tasktracker/stats/
+.tasktracker/cron.log
+.tasktracker/code_health.json
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Environment variables
+.env
+
+# OS specific files
+.DS_Store
+.directory
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~ 

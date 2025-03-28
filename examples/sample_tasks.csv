@@ -1,0 +1,4 @@
+title,description,category,status
+"Add global installation option","Create a global installation option for npm",feature,todo
+"Improve error handling","Add better error handling for edge cases",bugfix,todo
+"Create user documentation","Write comprehensive documentation for end users",docs,todo 

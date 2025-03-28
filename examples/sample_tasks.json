@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Implement snapshot command",
+    "description": "Create a command to take statistical snapshots of the project state",
+    "category": "feature",
+    "status": "todo"
+  },
+  {
+    "title": "Add unit tests for task commands",
+    "description": "Create tests for core task commands (add, list, update, view)",
+    "category": "test",
+    "status": "todo"
+  },
+  {
+    "title": "Create detailed documentation for import command",
+    "description": "Document the new import command with examples and supported formats",
+    "category": "docs",
+    "status": "todo"
+  },
+  {
+    "title": "Fix table formatting in task list output",
+    "description": "Fix alignment issues in the task list table for long task titles",
+    "category": "bugfix",
+    "status": "todo"
+  }
+] 

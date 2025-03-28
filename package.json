@@ -1,0 +1,56 @@
+{
+  "name": "tasktracker-cli",
+  "version": "1.4.0",
+  "description": "A lightweight task management system for developers that helps track technical debt",
+  "main": "bin/tasktracker",
+  "bin": {
+    "tasktracker": "./bin/tasktracker",
+    "tt": "./bin/tasktracker"
+  },
+  "preferGlobal": true,
+  "scripts": {
+    "start": "./bin/tasktracker",
+    "init": "./bin/tasktracker init",
+    "test": "node tests/test-runner.js",
+    "test:core": "node tests/test-runner.js tests/test-core-commands.js",
+    "install": "node install.js",
+    "postinstall": "node install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/tasktracker.git"
+  },
+  "keywords": [
+    "task",
+    "tracker",
+    "project",
+    "management",
+    "developer",
+    "cli",
+    "git",
+    "technical-debt",
+    "ai-assistant",
+    "cursor",
+    "ide-integration"
+  ],
+  "author": "TaskTracker Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/username/tasktracker/issues"
+  },
+  "homepage": "https://github.com/username/tasktracker#readme",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^9.4.1",
+    "inquirer": "^8.2.5",
+    "fs-extra": "^10.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.3.1",
+    "eslint": "^8.29.0",
+    "rimraf": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

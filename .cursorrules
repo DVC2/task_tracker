@@ -1,0 +1,49 @@
+# TaskTracker cursor integration rules
+# These rules provide enhanced TaskTracker functionality within Cursor IDE
+
+# Get current tasktracker tasks
+task.get_tasks = ./bin/tasktracker list
+
+# Get task details
+task.view_task = ./bin/tasktracker view $1
+
+# Add quick task
+task.add_quick = ./bin/tasktracker quick "$1" "${2:-feature}"
+
+# Change task status
+task.status_todo = ./bin/tasktracker update $1 status todo
+task.status_in_progress = ./bin/tasktracker update $1 status in-progress
+task.status_review = ./bin/tasktracker update $1 status review
+task.status_done = ./bin/tasktracker update $1 status done
+
+# Add comment to task
+task.comment = ./bin/tasktracker update $1 comment "$2"
+
+# Add current file to task
+task.add_file = ./bin/tasktracker update $1 addfile "${cursor.file}"
+
+# Track file changes and link to tasks
+task.track_changes = ./bin/tasktracker changes
+
+# Show statistics (when implemented)
+task.stats = ./bin/tasktracker snapshot
+
+# When creating a cursor task with TaskTracker, this adds a helpful comment template
+create_task.template = """
+/**
+ * Task #${task.id}: ${task.title}
+ * Status: ${task.status}
+ * Category: ${task.category}
+ * 
+ * Description:
+ * ${task.description}
+ */
+"""
+
+# Custom key bindings for TaskTracker
+key.ctrl+alt+t = task.get_tasks
+key.ctrl+alt+n = task.add_quick "New task from Cursor" feature
+key.ctrl+alt+c = task.track_changes
+
+# Add cursor status bar integration
+statusbar.left = "TaskTracker: ${task.current_task || 'No task'}"

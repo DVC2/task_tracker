@@ -1,0 +1,116 @@
+[
+  {
+    "timestamp": "2025-03-28T21:36:43.725Z",
+    "projectName": "0.2.0",
+    "version": "0.2.0",
+    "statistics": {
+      "totalTasks": 15,
+      "tasksByStatus": {
+        "todo": 7,
+        "in-progress": 3,
+        "review": 0,
+        "done": 5
+      },
+      "tasksByCategory": {
+        "feature": 7,
+        "bugfix": 3,
+        "refactor": 0,
+        "docs": 2,
+        "test": 3,
+        "chore": 0
+      },
+      "completionRate": 33,
+      "recentTasks": 15,
+      "recentlyCompleted": 5,
+      "velocityPerDay": 0.7,
+      "estimatedDays": 15,
+      "estimatedCompletionDate": "4/12/2025",
+      "totalFiles": 61,
+      "filesByType": {
+        ".yml": 2,
+        ".md": 32,
+        ".sh": 2,
+        ".js": 12,
+        ".json": 4
+      },
+      "commitCount": 5,
+      "contributorCount": 1
+    }
+  },
+  {
+    "timestamp": "2025-03-28T21:36:47.562Z",
+    "projectName": "0.2.0",
+    "version": "0.2.0",
+    "statistics": {
+      "totalTasks": 15,
+      "tasksByStatus": {
+        "todo": 7,
+        "in-progress": 3,
+        "review": 0,
+        "done": 5
+      },
+      "tasksByCategory": {
+        "feature": 7,
+        "bugfix": 3,
+        "refactor": 0,
+        "docs": 2,
+        "test": 3,
+        "chore": 0
+      },
+      "completionRate": 33,
+      "recentTasks": 15,
+      "recentlyCompleted": 5,
+      "velocityPerDay": 0.7,
+      "estimatedDays": 15,
+      "estimatedCompletionDate": "4/12/2025",
+      "totalFiles": 61,
+      "filesByType": {
+        ".yml": 2,
+        ".md": 32,
+        ".sh": 2,
+        ".js": 12,
+        ".json": 4
+      },
+      "commitCount": 5,
+      "contributorCount": 1
+    }
+  },
+  {
+    "timestamp": "2025-03-28T21:37:57.637Z",
+    "projectName": "0.3.0",
+    "version": "0.3.0",
+    "statistics": {
+      "totalTasks": 15,
+      "tasksByStatus": {
+        "todo": 6,
+        "in-progress": 1,
+        "review": 0,
+        "done": 8
+      },
+      "tasksByCategory": {
+        "feature": 7,
+        "bugfix": 3,
+        "refactor": 0,
+        "docs": 2,
+        "test": 3,
+        "chore": 0
+      },
+      "completionRate": 53,
+      "recentTasks": 15,
+      "recentlyCompleted": 8,
+      "velocityPerDay": 1.1,
+      "estimatedDays": 7,
+      "estimatedCompletionDate": "4/4/2025",
+      "totalFiles": 61,
+      "filesByType": {
+        ".yml": 2,
+        ".md": 32,
+        ".sh": 2,
+        ".js": 12,
+        ".json": 4
+      },
+      "commitCount": 5,
+      "contributorCount": 1
+    }
+  }
+]

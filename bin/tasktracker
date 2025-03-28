@@ -1,0 +1,158 @@
+#!/usr/bin/env node
+
+/**
+ * TaskTracker - Unified Command Line Interface
+ * 
+ * A lightweight task management system for developers.
+ * This script provides a single entry point to all TaskTracker functionality.
+ * 
+ * Usage: ./tasktracker <command> [options]
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { spawnSync, execSync } = require('child_process');
+
+// Find the application root directory
+const appRoot = path.resolve(__dirname, '..');
+const libDir = path.join(appRoot, 'lib');
+
+// Available commands and their scripts
+const COMMANDS = {
+  // Core task management
+  'init': { script: 'tasktracker.js', description: 'Initialize TaskTracker in the current directory' },
+  'add': { script: 'tasktracker.js', description: 'Add a new task (interactive)' },
+  'quick': { script: 'quick-task.js', description: 'Quickly add a task (non-interactive)' },
+  'update': { script: 'tasktracker.js', description: 'Update an existing task' },
+  'list': { script: 'tasktracker.js', description: 'List all tasks' },
+  'view': { script: 'tasktracker.js', description: 'View details of a specific task' },
+  'changes': { script: 'tasktracker.js', description: 'Track file changes' },
+  'release': { script: 'tasktracker.js', description: 'Create a new release' },
+  'ai-context': { script: 'tasktracker.js', description: 'Generate AI-friendly context from tasks' },
+  'code-health': { script: 'tasktracker.js', description: 'Analyze code health metrics for technical debt' },
+  
+  // Statistics and reporting
+  'snapshot': { script: 'stats-tracker.js', description: 'Take a snapshot of the current project state' },
+  'report': { script: 'stats-tracker.js', description: 'Generate a report (text, html, json)' },
+  'compare': { script: 'stats-tracker.js', description: 'Compare with a previous snapshot' },
+  'trends': { script: 'stats-tracker.js', description: 'Show task completion trends' },
+  
+  // Setup and utilities
+  'setup': { script: 'install.js', description: 'Set up TaskTracker in a project' },
+  'automate': { script: 'auto-tracker.sh', description: 'Set up Git hooks and automation', shell: true },
+  'onboard': { script: 'tasktracker.js', description: 'Interactive onboarding process for new users' },
+  'help': { description: 'Show help information' }
+};
+
+// Process command line arguments
+const args = process.argv.slice(2);
+const command = args[0];
+const commandArgs = args.slice(1);
+
+// Show help if no command is provided
+if (!command || command === 'help') {
+  showHelp();
+  process.exit(0);
+}
+
+// Special case for quick task (pass all arguments)
+if (command === 'quick') {
+  const quickTaskPath = path.join(libDir, 'quick-task.js');
+  if (fs.existsSync(quickTaskPath)) {
+    const result = spawnSync('node', [quickTaskPath, ...commandArgs], { stdio: 'inherit' });
+    process.exit(result.status);
+  } else {
+    console.error('❌ quick-task.js not found!');
+    process.exit(1);
+  }
+}
+
+// Execute the appropriate script for the command
+if (COMMANDS[command]) {
+  const cmd = COMMANDS[command];
+  
+  if (cmd.shell) {
+    // Execute shell command
+    const scriptPath = path.join(libDir, cmd.script);
+    if (fs.existsSync(scriptPath)) {
+      try {
+        execSync(`bash ${scriptPath} ${commandArgs.join(' ')}`, { stdio: 'inherit' });
+      } catch (error) {
+        process.exit(1);
+      }
+    } else {
+      console.error(`❌ ${cmd.script} not found!`);
+      process.exit(1);
+    }
+  } else {
+    // Execute Node.js script
+    const scriptPath = path.join(libDir, cmd.script);
+    if (fs.existsSync(scriptPath)) {
+      // For commands that use the original scripts, translate the command
+      let scriptCommand = command;
+      if (cmd.script === 'tasktracker.js' && command !== 'init') {
+        // Use the command as-is for tasktracker.js
+      } else if (cmd.script === 'stats-tracker.js') {
+        // For stats commands, the command becomes the first argument
+        commandArgs.unshift(command);
+        scriptCommand = '';
+      }
+      
+      const cmdArgs = [scriptPath, scriptCommand, ...commandArgs].filter(Boolean);
+      const result = spawnSync('node', cmdArgs, { stdio: 'inherit' });
+      process.exit(result.status);
+    } else {
+      console.error(`❌ ${cmd.script} not found!`);
+      process.exit(1);
+    }
+  }
+} else {
+  console.error(`❌ Unknown command: ${command}`);
+  showHelp();
+  process.exit(1);
+}
+
+// Display help information
+function showHelp() {
+  const logo = `
+╔════════════════════════════════════════╗
+║   _____         _    _____             ║
+║  |_   _|_ _ ___| | _|_   _| __ __ _    ║
+║    | |/ _\` / __| |/ / | || '__/ _\` |   ║
+║    | | (_| \\__ \\   <  | || | | (_| |   ║
+║    |_|\\__,_|___/_|\\_\\ |_||_|  \\__,_|   ║
+║                                        ║
+╚════════════════════════════════════════╝`;
+
+  console.log(logo);
+  console.log('\nUsage: ./bin/tasktracker <command> [options]');
+  console.log('\nTask Management:');
+  console.log('  init                   Initialize TaskTracker in the current directory');
+  console.log('  add                    Add a new task (interactive)');
+  console.log('  quick "Task" [cat]     Quickly add a task (non-interactive)');
+  console.log('  update                 Update an existing task');
+  console.log('  list [status]          List all tasks or filter by status');
+  console.log('  view <id>              View details of a specific task');
+  console.log('  changes                Check which files have changed');
+  console.log('  release                Create a new release');
+  console.log('  ai-context [id]        Generate AI-friendly context from tasks');
+  console.log('  code-health [path]     Analyze code health metrics for technical debt');
+  
+  console.log('\nStatistics and Reporting:');
+  console.log('  snapshot               Take a snapshot of the current project state');
+  console.log('  report [type]          Generate a report (text, html, json)');
+  console.log('  compare [days]         Compare with a snapshot from N days ago');
+  console.log('  trends                 Show task completion trends');
+  
+  console.log('\nSetup and Utilities:');
+  console.log('  setup                  Set up TaskTracker in a project');
+  console.log('  automate               Configure Git hooks and automation');
+  console.log('  onboard                Interactive onboarding process for new users');
+  console.log('  help                   Show this help information');
+  
+  console.log('\nExamples:');
+  console.log('  ./bin/tasktracker init');
+  console.log('  ./bin/tasktracker quick "Fix login button" bugfix');
+  console.log('  ./bin/tasktracker list todo');
+  console.log('  ./bin/tasktracker report html');
+} 

@@ -1,0 +1,80 @@
+{
+  "name": "tasktracker-vscode",
+  "displayName": "TaskTracker",
+  "description": "Task tracking with technical debt management for VSCode",
+  "version": "1.0.0",
+  "publisher": "tasktracker",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:tasktracker.init",
+    "onCommand:tasktracker.addTask",
+    "onCommand:tasktracker.listTasks",
+    "onCommand:tasktracker.viewTask",
+    "onCommand:tasktracker.updateTask",
+    "onCommand:tasktracker.codeHealth",
+    "workspaceContains:.tasktracker/**"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tasktracker.init",
+        "title": "TaskTracker: Initialize"
+      },
+      {
+        "command": "tasktracker.addTask",
+        "title": "TaskTracker: Add Task"
+      },
+      {
+        "command": "tasktracker.listTasks",
+        "title": "TaskTracker: List Tasks"
+      },
+      {
+        "command": "tasktracker.viewTask",
+        "title": "TaskTracker: View Task"
+      },
+      {
+        "command": "tasktracker.updateTask",
+        "title": "TaskTracker: Update Task"
+      },
+      {
+        "command": "tasktracker.codeHealth",
+        "title": "TaskTracker: Analyze Code Health"
+      }
+    ],
+    "statusBar": [
+      {
+        "id": "tasktracker-status",
+        "alignment": "left",
+        "priority": 100
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "tasktracker-view",
+          "name": "TaskTracker"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/node": "^14.17.0",
+    "eslint": "^7.32.0",
+    "typescript": "^4.4.3"
+  }
+} 
