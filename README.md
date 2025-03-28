@@ -55,6 +55,35 @@ chmod +x bin/tasktracker
 ./bin/tasktracker automate
 ```
 
+### Upgrading from Previous Versions
+
+If you've previously installed TaskTracker, you can upgrade to the latest version:
+
+#### Upgrading Global Installation
+
+```bash
+# Update via npm
+npm update -g tasktracker-cli
+```
+
+#### Upgrading Git-Based Installation
+
+```bash
+# Pull the latest changes
+cd tasktracker
+git pull origin main
+
+# Copy the updated files to your project
+cp -r bin/* your-project/bin/
+cp -r lib/* your-project/lib/
+```
+
+Your existing tasks and data will be preserved during the upgrade. Version 1.5.0 adds improved compatibility:
+- Works reliably in environments with or without Git
+- Fixed formatting issues with chalk 
+- More consistent command syntax (e.g., 'add-file' instead of 'addfile')
+- Enhanced documentation and help text
+
 ### Usage
 
 TaskTracker provides a single unified command that gives you access to all functionality:
