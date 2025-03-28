@@ -1,6 +1,6 @@
 {
   "name": "tasktracker-cli",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "A lightweight task management system for developers that helps track technical debt",
   "main": "bin/tasktracker",
   "bin": {

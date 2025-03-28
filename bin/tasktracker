@@ -126,33 +126,58 @@ function showHelp() {
 
   console.log(logo);
   console.log('\nUsage: ./bin/tasktracker <command> [options]');
+  
   console.log('\nTask Management:');
-  console.log('  init                   Initialize TaskTracker in the current directory');
-  console.log('  add                    Add a new task (interactive)');
-  console.log('  quick "Task" [cat]     Quickly add a task (non-interactive)');
-  console.log('  update                 Update an existing task');
-  console.log('  list [status]          List all tasks or filter by status');
-  console.log('  view <id>              View details of a specific task');
-  console.log('  changes                Check which files have changed');
-  console.log('  release                Create a new release');
-  console.log('  ai-context [id]        Generate AI-friendly context from tasks');
-  console.log('  code-health [path]     Analyze code health metrics for technical debt');
+  console.log('  init                     Initialize TaskTracker in the current directory');
+  console.log('  add                      Add a new task (interactive)');
+  console.log('  quick "Task" [cat]       Quickly add a task (non-interactive)');
+  console.log('  update <id> <field> <value>  Update an existing task');
+  console.log('    Fields: status, category, priority, effort, title, desc, add-file, comment');
+  console.log('    Example: update 1 status done');
+  console.log('    Example: update 2 add-file src/main.js    (link file to task)');
+  console.log('  list [status]            List all tasks or filter by status');
+  console.log('  view <id>                View details of a specific task');
+  console.log('  changes [path]           Check which files have changed (works without Git)');
+  console.log('  release [version]        Create a new release');
+  console.log('  ai-context [id]          Generate AI-friendly context from tasks');
+  console.log('  code-health [path]       Analyze code health metrics for technical debt');
   
   console.log('\nStatistics and Reporting:');
-  console.log('  snapshot               Take a snapshot of the current project state');
-  console.log('  report [type]          Generate a report (text, html, json)');
-  console.log('  compare [days]         Compare with a snapshot from N days ago');
-  console.log('  trends                 Show task completion trends');
+  console.log('  snapshot                 Take a snapshot of the current project state');
+  console.log('  report [type]            Generate a report (text, html, json)');
+  console.log('  compare [days]           Compare with a snapshot from N days ago');
+  console.log('  trends                   Show task completion trends');
   
   console.log('\nSetup and Utilities:');
-  console.log('  setup                  Set up TaskTracker in a project');
-  console.log('  automate               Configure Git hooks and automation');
-  console.log('  onboard                Interactive onboarding process for new users');
-  console.log('  help                   Show this help information');
+  console.log('  setup                    Set up TaskTracker in a project');
+  console.log('  automate                 Configure Git hooks and automation (optional)');
+  console.log('  onboard                  Interactive onboarding process for new users');
+  console.log('  help                     Show this help information');
+  
+  console.log('\nCommand Details:');
+  console.log('  • update - Update task properties:');
+  console.log('    - status: Change task status (todo, in-progress, review, done)');
+  console.log('    - category: Change category (feature, bugfix, technical-debt, etc.)');
+  console.log('    - priority: Set priority (p0-critical, p1-high, p2-medium, p3-low)');
+  console.log('    - effort: Set effort (1-trivial, 3-medium, 5-large, etc.)');
+  console.log('    - add-file: Link a file to the task');
+  console.log('    - comment: Add a comment to the task');
+  
+  console.log('  • changes - Tracks file changes with or without Git');
+  console.log('    - Uses Git if available or falls back to file timestamp tracking');
+  console.log('    - Helps identify which tasks are affected by your changes');
+  
+  console.log('  • ai-context - Creates context for AI assistants:');
+  console.log('    - Generates a summary of tasks for AI tools like GitHub Copilot or Claude');
+  console.log('    - Helps AI understand your project structure and current work');
   
   console.log('\nExamples:');
   console.log('  ./bin/tasktracker init');
   console.log('  ./bin/tasktracker quick "Fix login button" bugfix');
   console.log('  ./bin/tasktracker list todo');
+  console.log('  ./bin/tasktracker update 3 add-file src/components/Login.js');
+  console.log('  ./bin/tasktracker changes');
   console.log('  ./bin/tasktracker report html');
+  
+  console.log('\nFor more details, see the documentation in the docs/ directory.');
 } 
