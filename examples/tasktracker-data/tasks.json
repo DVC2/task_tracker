@@ -1,0 +1,100 @@
+{
+  "lastId": 3,
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Implement login functionality",
+      "description": "Create a secure login system with password hashing and session management",
+      "category": "feature",
+      "status": "in-progress",
+      "priority": "p1-high",
+      "effort": "3-medium",
+      "created": "2025-03-15T10:00:00.000Z",
+      "lastUpdated": "2025-03-16T14:30:00.000Z",
+      "createdBy": "developer1",
+      "branch": "feature/login",
+      "relatedFiles": [
+        "src/auth/login.js",
+        "src/components/LoginForm.js",
+        "styles/auth.css"
+      ],
+      "comments": [
+        {
+          "text": "Adding OAuth support as well",
+          "timestamp": "2025-03-16T11:20:00.000Z",
+          "author": "developer1"
+        }
+      ],
+      "checklists": [
+        {
+          "title": "Implementation Steps",
+          "items": [
+            {
+              "text": "Create login form component",
+              "completed": true
+            },
+            {
+              "text": "Implement form validation",
+              "completed": true
+            },
+            {
+              "text": "Add password hashing",
+              "completed": false
+            },
+            {
+              "text": "Implement session management",
+              "completed": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Fix navigation menu on mobile devices",
+      "description": "The navigation menu doesn't display correctly on mobile devices with small screens",
+      "category": "bugfix",
+      "status": "todo",
+      "priority": "p2-medium",
+      "effort": "2-small",
+      "created": "2025-03-18T09:15:00.000Z",
+      "lastUpdated": "2025-03-18T09:15:00.000Z",
+      "createdBy": "developer2",
+      "branch": "main",
+      "relatedFiles": [
+        "src/components/Navigation.js",
+        "styles/navigation.css"
+      ],
+      "comments": []
+    },
+    {
+      "id": 3,
+      "title": "Refactor database connection module",
+      "description": "Improve the database connection module to handle connection pooling and better error recovery",
+      "category": "technical-debt",
+      "status": "done",
+      "priority": "p3-low",
+      "effort": "5-large",
+      "created": "2025-03-10T11:30:00.000Z",
+      "lastUpdated": "2025-03-14T16:45:00.000Z",
+      "createdBy": "developer1",
+      "branch": "refactor/db-connection",
+      "relatedFiles": [
+        "src/db/connection.js",
+        "src/db/errorHandler.js" 
+      ],
+      "comments": [
+        {
+          "text": "Added connection pooling",
+          "timestamp": "2025-03-12T10:15:00.000Z",
+          "author": "developer1"
+        },
+        {
+          "text": "Improved error handling with automatic reconnection",
+          "timestamp": "2025-03-14T15:30:00.000Z",
+          "author": "developer1"
+        }
+      ]
+    }
+  ]
+} 

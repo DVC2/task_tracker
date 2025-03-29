@@ -7,17 +7,10 @@ echo "🛠️  TaskTracker Auto-Tracking Setup"
 echo "=================================================="
 echo ""
 
-# Check if TaskTracker exists
-if [ ! -f "tasktracker.js" ]; then
-  echo "❌ TaskTracker not found in current directory!"
-  echo "Please run this script from your project root where tasktracker.js is located."
-  exit 1
-fi
-
-# Check if stats-tracker.js exists
-if [ ! -f "stats-tracker.js" ]; then
-  echo "❌ stats-tracker.js not found!"
-  echo "Please ensure you have the TaskTracker Statistics Tracker installed."
+# Check if TaskTracker is installed
+if ! command -v tasktracker &> /dev/null; then
+  echo "❌ TaskTracker not found in PATH!"
+  echo "Please ensure TaskTracker is installed properly."
   exit 1
 fi
 
@@ -48,17 +41,17 @@ setup_git_hooks() {
 
 # Run TaskTracker to check for changed files
 echo "🔍 Checking for changes in tracked files..."
-node tasktracker.js changes
+tasktracker changes
 
 # Ask if user wants to update related tasks
 read -p "Do you want to update any task statuses? (y/n): " answer
 if [ "$answer" == "y" ]; then
-  node tasktracker.js update
+  tasktracker update
 fi
 
 # Take a snapshot of current statistics
 echo "📊 Taking a statistics snapshot..."
-node stats-tracker.js snapshot
+tasktracker snapshot
 EOL
 
   # Make the hook executable
@@ -71,7 +64,7 @@ EOL
 
 # Update the statistics snapshot after commit
 echo "📊 Updating statistics snapshot..."
-node stats-tracker.js snapshot
+tasktracker snapshot
 EOL
 
   # Make the hook executable
@@ -100,7 +93,7 @@ setup_cron() {
   crontab -l > "$temp_file" 2>/dev/null
   
   # Check if entry already exists
-  if grep -q "stats-tracker.js snapshot" "$temp_file"; then
+  if grep -q "tasktracker snapshot" "$temp_file"; then
     echo "⚠️ A TaskTracker cron job already exists!"
     read -p "Do you want to replace it? (y/n): " answer
     if [ "$answer" != "y" ]; then
@@ -108,13 +101,13 @@ setup_cron() {
       return 0
     fi
     # Remove existing entry
-    grep -v "stats-tracker.js snapshot" "$temp_file" > "${temp_file}.new"
+    grep -v "tasktracker snapshot" "$temp_file" > "${temp_file}.new"
     mv "${temp_file}.new" "$temp_file"
   fi
   
   # Add new cron job (runs daily at midnight)
   echo "# TaskTracker daily statistics snapshot" >> "$temp_file"
-  echo "0 0 * * * cd $current_dir && /usr/bin/node $current_dir/stats-tracker.js snapshot >> $current_dir/.tasktracker/cron.log 2>&1" >> "$temp_file"
+  echo "0 0 * * * cd $current_dir && tasktracker snapshot >> $current_dir/.tasktracker/cron.log 2>&1" >> "$temp_file"
   
   # Install new crontab
   crontab "$temp_file"
@@ -143,7 +136,7 @@ setup_weekly_report() {
   crontab -l > "$temp_file" 2>/dev/null
   
   # Check if entry already exists
-  if grep -q "stats-tracker.js report html" "$temp_file"; then
+  if grep -q "tasktracker report html" "$temp_file"; then
     echo "⚠️ A TaskTracker weekly report cron job already exists!"
     read -p "Do you want to replace it? (y/n): " answer
     if [ "$answer" != "y" ]; then
@@ -151,13 +144,13 @@ setup_weekly_report() {
       return 0
     fi
     # Remove existing entry
-    grep -v "stats-tracker.js report html" "$temp_file" > "${temp_file}.new"
+    grep -v "tasktracker report html" "$temp_file" > "${temp_file}.new"
     mv "${temp_file}.new" "$temp_file"
   fi
   
   # Add new cron job (runs weekly on Sunday at 11:00 PM)
   echo "# TaskTracker weekly HTML report generation" >> "$temp_file"
-  echo "0 23 * * 0 cd $current_dir && /usr/bin/node $current_dir/stats-tracker.js report html >> $current_dir/.tasktracker/cron.log 2>&1" >> "$temp_file"
+  echo "0 23 * * 0 cd $current_dir && tasktracker report html >> $current_dir/.tasktracker/cron.log 2>&1" >> "$temp_file"
   
   # Install new crontab
   crontab "$temp_file"
@@ -232,16 +225,16 @@ echo "=================================================="
 echo "🎉 TaskTracker Auto-Tracking setup complete!"
 echo ""
 echo "📋 Task Management Commands:"
-echo "  node tasktracker.js help        Show task management commands"
-echo "  node tasktracker.js add         Create a new task"
-echo "  node tasktracker.js update      Update an existing task"
-echo "  node tasktracker.js changes     Check for changes in files"
+echo "  tasktracker help             Show task management commands"
+echo "  tasktracker add              Create a new task"
+echo "  tasktracker update           Update an existing task"
+echo "  tasktracker changes          Check for changes in files"
 echo ""
 echo "📊 Statistics and Reporting Commands:"
-echo "  node stats-tracker.js snapshot  Take a snapshot of the current state"
-echo "  node stats-tracker.js report html  Generate an HTML report"
-echo "  node stats-tracker.js compare 7    Compare with 7 days ago"
-echo "  node stats-tracker.js trends       Show completion trends"
+echo "  tasktracker snapshot         Take a snapshot of the current state"
+echo "  tasktracker report html      Generate an HTML report"
+echo "  tasktracker compare 7        Compare with 7 days ago"
+echo "  tasktracker trends           Show completion trends"
 echo ""
 echo "All reports will be saved in the .tasktracker/reports directory"
 echo "=================================================="

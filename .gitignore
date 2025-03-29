@@ -1,17 +1,35 @@
-# TaskTracker generated files
+# TaskTracker data files
+# Exclude runtime data files to avoid conflicts between users
+.tasktracker/tasks.json
+.tasktracker/config.json
+.tasktracker/file-hashes.json
+.tasktracker/file_hashes.json
+.tasktracker/snapshots.json
+.tasktracker/snapshots
 .tasktracker/reports/
 .tasktracker/stats/
 .tasktracker/cron.log
 .tasktracker/code_health.json
+# But keep the .tasktracker directory itself with a .gitkeep
+!.tasktracker/.gitkeep
+!.tasktracker/reports/.gitkeep
+!.tasktracker/stats/.gitkeep
+# Don't exclude example files
+!examples/tasktracker-data/
 
 # Node.js
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.eslintcache
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # OS specific files
 .DS_Store
@@ -19,10 +37,43 @@ yarn-error.log
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+$RECYCLE.BIN/
 
 # Editor specific
 .vscode/
+!examples/.vscode/
+!docs/vscode-integration/.vscode/
 .idea/
 *.swp
 *.swo
-*~ 
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# Logs and temp files
+logs/
+*.log
+tmp/
+temp/
+.cache/
+
+# Testing
+coverage/
+.nyc_output/
+# Allow .gitkeep files in test directories
+!tests/temp/.gitkeep
+
+# Build outputs
+dist/
+build/
+out/
+
+# Local SSL certificates
+*.pem
+*.key
+*.crt 

@@ -9,8 +9,8 @@
   },
   "preferGlobal": true,
   "scripts": {
-    "start": "./bin/tasktracker",
-    "init": "./bin/tasktracker init",
+    "start": "node ./bin/tasktracker",
+    "init": "node ./bin/tasktracker init",
     "test": "node tests/test-runner.js",
     "test:core": "node tests/test-runner.js tests/test-core-commands.js",
     "install": "node install.js",

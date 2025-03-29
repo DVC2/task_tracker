@@ -1,0 +1,37 @@
+{
+  "src/components/LoginForm.js": {
+    "lastModified": "2025-03-16T14:20:00.000Z",
+    "size": 2508,
+    "lastChecked": "2025-03-16T14:25:00.000Z"
+  },
+  "src/auth/login.js": {
+    "lastModified": "2025-03-16T13:45:00.000Z",
+    "size": 1876,
+    "lastChecked": "2025-03-16T14:25:00.000Z"
+  },
+  "styles/auth.css": {
+    "lastModified": "2025-03-15T11:10:00.000Z",
+    "size": 950,
+    "lastChecked": "2025-03-16T14:25:00.000Z"
+  },
+  "src/components/Navigation.js": {
+    "lastModified": "2025-03-05T09:30:00.000Z",
+    "size": 1245,
+    "lastChecked": "2025-03-18T09:20:00.000Z"
+  },
+  "styles/navigation.css": {
+    "lastModified": "2025-03-01T15:45:00.000Z",
+    "size": 785,
+    "lastChecked": "2025-03-18T09:20:00.000Z"
+  },
+  "src/db/connection.js": {
+    "lastModified": "2025-03-14T16:30:00.000Z",
+    "size": 2305,
+    "lastChecked": "2025-03-14T16:45:00.000Z"
+  },
+  "src/db/errorHandler.js": {
+    "lastModified": "2025-03-14T15:20:00.000Z",
+    "size": 1180,
+    "lastChecked": "2025-03-14T16:45:00.000Z"
+  }
+} 

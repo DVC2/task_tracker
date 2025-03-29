@@ -1,0 +1,52 @@
+{
+  "projectName": "Sample Project",
+  "projectType": "javascript",
+  "versioningType": "semver",
+  "currentVersion": "1.2.0",
+  "taskCategories": [
+    "feature",
+    "bugfix",
+    "refactor",
+    "docs",
+    "test",
+    "chore",
+    "technical-debt"
+  ],
+  "taskStatuses": [
+    "todo",
+    "in-progress",
+    "review",
+    "done"
+  ],
+  "priorityLevels": [
+    "p0-critical",
+    "p1-high",
+    "p2-medium",
+    "p3-low"
+  ],
+  "effortEstimation": [
+    "1-trivial",
+    "2-small",
+    "3-medium",
+    "5-large",
+    "8-xlarge",
+    "13-complex"
+  ],
+  "changelogSections": [
+    "Added",
+    "Changed",
+    "Fixed",
+    "Deprecated",
+    "Removed",
+    "Security"
+  ],
+  "gitIntegration": true,
+  "customSettings": {
+    "autoAssignAuthors": true,
+    "defaultBranchPrefix": "task/",
+    "defaultCategory": "feature",
+    "defaultStatus": "todo",
+    "defaultPriority": "p2-medium",
+    "defaultEffort": "3-medium"
+  }
+} 

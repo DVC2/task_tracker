@@ -1,0 +1,64 @@
+[
+  {
+    "timestamp": "2025-03-10T09:00:00.000Z",
+    "version": "1.1.0",
+    "taskCounts": {
+      "total": 20,
+      "todo": 12,
+      "inProgress": 5,
+      "review": 1,
+      "done": 2
+    },
+    "categoryBreakdown": {
+      "feature": 10,
+      "bugfix": 3,
+      "refactor": 2,
+      "docs": 1,
+      "test": 2,
+      "chore": 1,
+      "technicalDebt": 1
+    },
+    "statistics": {
+      "gitAvailable": true,
+      "totalCommits": 152,
+      "contributors": 3,
+      "files": 68,
+      "topChangedFiles": [
+        { "path": "src/components/User.js", "changes": 24 },
+        { "path": "src/api/auth.js", "changes": 18 },
+        { "path": "styles/forms.css", "changes": 15 }
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-03-17T09:00:00.000Z",
+    "version": "1.2.0",
+    "taskCounts": {
+      "total": 25,
+      "todo": 10,
+      "inProgress": 8,
+      "review": 2,
+      "done": 5
+    },
+    "categoryBreakdown": {
+      "feature": 12,
+      "bugfix": 5,
+      "refactor": 3,
+      "docs": 1,
+      "test": 2,
+      "chore": 1,
+      "technicalDebt": 1
+    },
+    "statistics": {
+      "gitAvailable": true,
+      "totalCommits": 198,
+      "contributors": 4,
+      "files": 75,
+      "topChangedFiles": [
+        { "path": "src/components/LoginForm.js", "changes": 32 },
+        { "path": "src/api/auth.js", "changes": 25 },
+        { "path": "src/db/connection.js", "changes": 18 }
+      ]
+    }
+  }
+] 

@@ -49,10 +49,10 @@ cd your-project
 chmod +x bin/tasktracker
 
 # Initialize TaskTracker
-./bin/tasktracker init
+tasktracker init
 
 # (Optional) Set up automation
-./bin/tasktracker automate
+tasktracker automate
 ```
 
 ### Upgrading from Previous Versions
@@ -84,34 +84,68 @@ Your existing tasks and data will be preserved during the upgrade. Version 1.5.0
 - More consistent command syntax (e.g., 'add-file' instead of 'addfile')
 - Enhanced documentation and help text
 
+## Recent Improvements (v1.5.0)
+
+### 🎨 Enhanced Terminal Compatibility
+- Fixed chalk library compatibility issues with fallback formatting
+- Added ANSI color support when chalk is unavailable
+- Ensures consistent display across different terminal environments
+
+### 🔄 Improved Git Integration
+- More robust error handling for Git commands
+- Graceful fallback when Git is not available or repository is not initialized
+- Works seamlessly in both Git and non-Git environments
+
+### 📁 Enhanced File Tracking
+- Improved file change detection without Git dependency
+- More efficient file scanning with filtering and limits
+- Periodic cleanup of stale file hash entries
+- Performance optimizations for large projects
+
+### 🔧 Command Syntax Consistency
+- Added helpful command aliases (e.g., `files` for `changes`, `status` for `list`) 
+- Standardized command names and parameters
+- Enhanced help documentation with better examples
+
 ### Usage
 
 TaskTracker provides a single unified command that gives you access to all functionality:
 
 ```bash
 # Create a new task (interactive)
-./bin/tasktracker add
+tasktracker add
 
 # Quickly create tasks (non-interactive)
-./bin/tasktracker quick "Fix login bug" bugfix
+tasktracker quick "Fix login bug" bugfix
 
 # List all tasks
-./bin/tasktracker list
+tasktracker list
+# or use the alias
+tasktracker status
 
 # Update a task status
-./bin/tasktracker update
+tasktracker update 3 status done
 
 # Track file changes
-./bin/tasktracker changes
+tasktracker changes
+# or use the alias
+tasktracker files src
 
 # Generate a report
-./bin/tasktracker report html
+tasktracker report html
 
 # Take a snapshot of current project state
-./bin/tasktracker snapshot
+tasktracker snapshot
+# or use the alias
+tasktracker stats
 
 # Compare with previous snapshot
-./bin/tasktracker compare 7
+tasktracker compare 7
+
+# Get help information
+tasktracker help
+# or use shorthand
+tasktracker -h
 ```
 
 ## Project Structure
