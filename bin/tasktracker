@@ -26,7 +26,7 @@ const COMMANDS = {
   'update': { script: 'tasktracker.js', description: 'Update an existing task' },
   'list': { script: 'tasktracker.js', description: 'List all tasks' },
   'view': { script: 'tasktracker.js', description: 'View details of a specific task' },
-  'changes': { script: 'tasktracker.js', description: 'Track file changes' },
+  'changes': { script: 'tasktracker.js', command: 'changes', description: 'Track file changes' },
   'files': { script: 'tasktracker.js', command: 'changes', description: 'Alias for changes - track file changes' },
   'status': { script: 'tasktracker.js', command: 'list', description: 'Alias for list - show task status' },
   'release': { script: 'tasktracker.js', description: 'Create a new release' },
@@ -34,6 +34,9 @@ const COMMANDS = {
   'context': { script: 'tasktracker.js', command: 'ai-context', description: 'Alias for ai-context' },
   'code-health': { script: 'tasktracker.js', description: 'Analyze code health metrics for technical debt' },
   'health': { script: 'tasktracker.js', command: 'code-health', description: 'Alias for code-health' },
+  'verify': { script: 'tasktracker.js', description: 'Verify TaskTracker installation and configuration' },
+  'update-config': { script: 'tasktracker.js', description: 'Update configuration settings' },
+  'ignore': { script: 'tasktracker.js', description: 'Manage ignore patterns (.taskignore)' },
   
   // Statistics and reporting
   'snapshot': { script: 'stats-tracker.js', description: 'Take a snapshot of the current project state' },
@@ -54,7 +57,38 @@ const COMMANDS = {
 // Process command line arguments
 const args = process.argv.slice(2);
 const command = args[0];
-const commandArgs = args.slice(1);
+let commandArgs = args.slice(1);
+
+// Global options that can be used with any command
+const globalOptions = {
+  silent: false,
+  json: false,
+  nonInteractive: false
+};
+
+// Parse global options before passing them to commands
+function parseGlobalOptions() {
+  const filteredArgs = [];
+  
+  for (let i = 0; i < commandArgs.length; i++) {
+    const arg = commandArgs[i];
+    
+    if (arg === '--silent' || arg === '-s') {
+      globalOptions.silent = true;
+    } else if (arg === '--json' || arg === '-j') {
+      globalOptions.json = true;
+    } else if (arg === '--non-interactive' || arg === '--ni') {
+      globalOptions.nonInteractive = true;
+    } else {
+      filteredArgs.push(arg);
+    }
+  }
+  
+  return filteredArgs;
+}
+
+// Process global options
+const filteredCommandArgs = parseGlobalOptions();
 
 // Show help if no command is provided
 if (!command || COMMANDS[command]?.alias === 'help') {
@@ -72,7 +106,13 @@ if (command === 'help' || command === '-h' || command === '--help') {
 if (command === 'quick') {
   const quickTaskPath = path.join(libDir, 'quick-task.js');
   if (fs.existsSync(quickTaskPath)) {
-    const result = spawnSync('node', [quickTaskPath, ...commandArgs], { stdio: 'inherit' });
+    // Add global options as arguments
+    const globalFlags = [];
+    if (globalOptions.silent) globalFlags.push('--silent');
+    if (globalOptions.json) globalFlags.push('--json');
+    if (globalOptions.nonInteractive) globalFlags.push('--non-interactive');
+    
+    const result = spawnSync('node', [quickTaskPath, ...commandArgs, ...globalFlags], { stdio: 'inherit' });
     process.exit(result.status);
   } else {
     console.error('❌ quick-task.js not found!');
@@ -116,11 +156,17 @@ if (COMMANDS[command]) {
         // Use the command as-is for tasktracker.js
       } else if (cmd.script === 'stats-tracker.js') {
         // For stats commands, the command becomes the first argument
-        commandArgs.unshift(scriptCommand);
+        filteredCommandArgs.unshift(scriptCommand);
         scriptCommand = '';
       }
       
-      const cmdArgs = [scriptPath, scriptCommand, ...commandArgs].filter(Boolean);
+      // Add global options as arguments
+      const globalFlags = [];
+      if (globalOptions.silent) globalFlags.push('--silent');
+      if (globalOptions.json) globalFlags.push('--json');
+      if (globalOptions.nonInteractive) globalFlags.push('--non-interactive');
+      
+      const cmdArgs = [scriptPath, scriptCommand, ...globalFlags, ...filteredCommandArgs].filter(Boolean);
       const result = spawnSync('node', cmdArgs, { stdio: 'inherit' });
       process.exit(result.status);
     } else {
@@ -148,6 +194,11 @@ function showHelp() {
 
   console.log(logo);
   console.log('\nUsage: tasktracker <command> [options]');
+  
+  console.log('\nGlobal Options:');
+  console.log('  --json, -j               Output results in JSON format');
+  console.log('  --silent, -s             Suppress normal console output');
+  console.log('  --non-interactive, --ni  Never prompt for input (for automated environments)');
   
   console.log('\nTask Management:');
   console.log('  init                     Initialize TaskTracker in the current directory');
@@ -179,7 +230,21 @@ function showHelp() {
   console.log('  setup                    Set up TaskTracker in a project');
   console.log('  automate                 Configure Git hooks and automation (optional)');
   console.log('  onboard                  Interactive onboarding process for new users');
+  console.log('  verify                   Verify TaskTracker installation and configuration');
+  console.log('  ignore <action> [pattern] Manage ignore patterns (.taskignore)');
+  console.log('    - init                  Create a default .taskignore file');
+  console.log('    - list                  List all ignore patterns');
+  console.log('    - add <pattern>         Add a new pattern to ignore');
+  console.log('    - remove <pattern>      Remove an ignore pattern');
+  console.log('  update-config <option>   Update configuration settings');
+  console.log('    - suppress-chalk-warnings  Hide chalk library warnings');
+  console.log('    - show-chalk-warnings      Show chalk library warnings');
   console.log('  help, -h, --help         Show this help information');
+  
+  console.log('\nAutomation Usage Example:');
+  console.log('  tasktracker list --json          Output task list as JSON for automated processing');
+  console.log('  tasktracker quick "Task" --ni    Add a task in non-interactive mode (CI/CD)');
+  console.log('  tasktracker update 5 status done --silent  Update task silently (no output)');
   
   console.log('\nCommand Details:');
   console.log('  • update - Update task properties:');
