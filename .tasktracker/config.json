@@ -1,7 +1,8 @@
 {
-  "projectName": "task",
+  "projectName": "Sample Project",
+  "projectType": "javascript",
   "versioningType": "semver",
-  "currentVersion": "1.4.0",
+  "currentVersion": "1.2.0",
   "taskCategories": [
     "feature",
     "bugfix",
@@ -39,5 +40,13 @@
     "Removed",
     "Security"
   ],
-  "gitIntegration": true
-}
+  "gitIntegration": true,
+  "customSettings": {
+    "autoAssignAuthors": true,
+    "defaultBranchPrefix": "task/",
+    "defaultCategory": "feature",
+    "defaultStatus": "todo",
+    "defaultPriority": "p2-medium",
+    "defaultEffort": "3-medium"
+  }
+} 

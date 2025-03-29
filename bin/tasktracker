@@ -6,7 +6,7 @@
  * A lightweight task management system for developers.
  * This script provides a single entry point to all TaskTracker functionality.
  * 
- * Usage: ./tasktracker <command> [options]
+ * Usage: tasktracker <command> [options]
  */
 
 const fs = require('fs');
@@ -27,21 +27,28 @@ const COMMANDS = {
   'list': { script: 'tasktracker.js', description: 'List all tasks' },
   'view': { script: 'tasktracker.js', description: 'View details of a specific task' },
   'changes': { script: 'tasktracker.js', description: 'Track file changes' },
+  'files': { script: 'tasktracker.js', command: 'changes', description: 'Alias for changes - track file changes' },
+  'status': { script: 'tasktracker.js', command: 'list', description: 'Alias for list - show task status' },
   'release': { script: 'tasktracker.js', description: 'Create a new release' },
   'ai-context': { script: 'tasktracker.js', description: 'Generate AI-friendly context from tasks' },
+  'context': { script: 'tasktracker.js', command: 'ai-context', description: 'Alias for ai-context' },
   'code-health': { script: 'tasktracker.js', description: 'Analyze code health metrics for technical debt' },
+  'health': { script: 'tasktracker.js', command: 'code-health', description: 'Alias for code-health' },
   
   // Statistics and reporting
   'snapshot': { script: 'stats-tracker.js', description: 'Take a snapshot of the current project state' },
   'report': { script: 'stats-tracker.js', description: 'Generate a report (text, html, json)' },
   'compare': { script: 'stats-tracker.js', description: 'Compare with a previous snapshot' },
   'trends': { script: 'stats-tracker.js', description: 'Show task completion trends' },
+  'stats': { script: 'stats-tracker.js', command: 'snapshot', description: 'Alias for snapshot - take project snapshot' },
   
   // Setup and utilities
   'setup': { script: 'install.js', description: 'Set up TaskTracker in a project' },
   'automate': { script: 'auto-tracker.sh', description: 'Set up Git hooks and automation', shell: true },
   'onboard': { script: 'tasktracker.js', description: 'Interactive onboarding process for new users' },
-  'help': { description: 'Show help information' }
+  'help': { description: 'Show help information' },
+  '--help': { alias: 'help', description: 'Show help information' },
+  '-h': { alias: 'help', description: 'Show help information' }
 };
 
 // Process command line arguments
@@ -50,7 +57,13 @@ const command = args[0];
 const commandArgs = args.slice(1);
 
 // Show help if no command is provided
-if (!command || command === 'help') {
+if (!command || COMMANDS[command]?.alias === 'help') {
+  showHelp();
+  process.exit(0);
+}
+
+// Special case for help command directly
+if (command === 'help' || command === '-h' || command === '--help') {
   showHelp();
   process.exit(0);
 }
@@ -71,7 +84,16 @@ if (command === 'quick') {
 if (COMMANDS[command]) {
   const cmd = COMMANDS[command];
   
-  if (cmd.shell) {
+  // Handle alias commands
+  if (cmd.alias) {
+    // If this is an alias, use the aliased command
+    const aliasedCmd = COMMANDS[cmd.alias];
+    if (aliasedCmd) {
+      // Execute the aliased command
+      const result = spawnSync(process.argv[0], [process.argv[1], cmd.alias, ...commandArgs], { stdio: 'inherit' });
+      process.exit(result.status);
+    }
+  } else if (cmd.shell) {
     // Execute shell command
     const scriptPath = path.join(libDir, cmd.script);
     if (fs.existsSync(scriptPath)) {
@@ -89,12 +111,12 @@ if (COMMANDS[command]) {
     const scriptPath = path.join(libDir, cmd.script);
     if (fs.existsSync(scriptPath)) {
       // For commands that use the original scripts, translate the command
-      let scriptCommand = command;
+      let scriptCommand = cmd.command || command;
       if (cmd.script === 'tasktracker.js' && command !== 'init') {
         // Use the command as-is for tasktracker.js
       } else if (cmd.script === 'stats-tracker.js') {
         // For stats commands, the command becomes the first argument
-        commandArgs.unshift(command);
+        commandArgs.unshift(scriptCommand);
         scriptCommand = '';
       }
       
@@ -125,7 +147,7 @@ function showHelp() {
 ╚════════════════════════════════════════╝`;
 
   console.log(logo);
-  console.log('\nUsage: ./bin/tasktracker <command> [options]');
+  console.log('\nUsage: tasktracker <command> [options]');
   
   console.log('\nTask Management:');
   console.log('  init                     Initialize TaskTracker in the current directory');
@@ -136,14 +158,19 @@ function showHelp() {
   console.log('    Example: update 1 status done');
   console.log('    Example: update 2 add-file src/main.js    (link file to task)');
   console.log('  list [status]            List all tasks or filter by status');
+  console.log('  status                   Alias for list - show task status');
   console.log('  view <id>                View details of a specific task');
-  console.log('  changes [path]           Check which files have changed (works without Git)');
+  console.log('  changes [path]           Track file changes (works without Git)');
+  console.log('  files [path]             Alias for changes - track file changes');
   console.log('  release [version]        Create a new release');
   console.log('  ai-context [id]          Generate AI-friendly context from tasks');
+  console.log('  context [id]             Alias for ai-context');
   console.log('  code-health [path]       Analyze code health metrics for technical debt');
+  console.log('  health [path]            Alias for code-health');
   
   console.log('\nStatistics and Reporting:');
   console.log('  snapshot                 Take a snapshot of the current project state');
+  console.log('  stats                    Alias for snapshot - take project snapshot');
   console.log('  report [type]            Generate a report (text, html, json)');
   console.log('  compare [days]           Compare with a snapshot from N days ago');
   console.log('  trends                   Show task completion trends');
@@ -152,7 +179,7 @@ function showHelp() {
   console.log('  setup                    Set up TaskTracker in a project');
   console.log('  automate                 Configure Git hooks and automation (optional)');
   console.log('  onboard                  Interactive onboarding process for new users');
-  console.log('  help                     Show this help information');
+  console.log('  help, -h, --help         Show this help information');
   
   console.log('\nCommand Details:');
   console.log('  • update - Update task properties:');
@@ -163,21 +190,22 @@ function showHelp() {
   console.log('    - add-file: Link a file to the task');
   console.log('    - comment: Add a comment to the task');
   
-  console.log('  • changes - Tracks file changes with or without Git');
+  console.log('  • changes/files - Tracks file changes with or without Git');
   console.log('    - Uses Git if available or falls back to file timestamp tracking');
   console.log('    - Helps identify which tasks are affected by your changes');
   
-  console.log('  • ai-context - Creates context for AI assistants:');
+  console.log('  • ai-context/context - Creates context for AI assistants:');
   console.log('    - Generates a summary of tasks for AI tools like GitHub Copilot or Claude');
   console.log('    - Helps AI understand your project structure and current work');
   
   console.log('\nExamples:');
-  console.log('  ./bin/tasktracker init');
-  console.log('  ./bin/tasktracker quick "Fix login button" bugfix');
-  console.log('  ./bin/tasktracker list todo');
-  console.log('  ./bin/tasktracker update 3 add-file src/components/Login.js');
-  console.log('  ./bin/tasktracker changes');
-  console.log('  ./bin/tasktracker report html');
+  console.log('  tasktracker init');
+  console.log('  tasktracker quick "Fix login button" bugfix');
+  console.log('  tasktracker list todo');
+  console.log('  tasktracker update 3 add-file src/components/Login.js');
+  console.log('  tasktracker changes');
+  console.log('  tasktracker files src');
+  console.log('  tasktracker report html');
   
   console.log('\nFor more details, see the documentation in the docs/ directory.');
 } 
