@@ -10,6 +10,7 @@
 | 4 | Add non-interactive mode | Implement batch/non-interactive mode for automated environments | Medium | ✅ DONE |
 | 5 | Enhance snippet configuration | Allow configuring snippet length and content in AI context | Medium | 📝 PLANNED |
 | 6 | Implement ASCII charts | Add basic ASCII charts to text reports | Medium | 📝 PLANNED |
+| 7 | Address security vulnerabilities | Fix security issues in non-interactive mode implementation | High | 📝 PLANNED |
 
 ## Implementation Progress
 - ✅ Task #4: Fix chalk library warnings - Implemented configuration option to suppress chalk warnings
@@ -17,6 +18,7 @@
 - ✅ Task #6: Add .taskignore functionality - Created a .gitignore-like system for excluding files from tracking
 - ✅ Task #7: Implement non-interactive mode - Added JSON output, silent mode and automation options
 - 📝 Task #9: Enhance snippet configuration - Created task for customizing AI context output
+- 📝 Task #12: Address security vulnerabilities - Added security improvements for non-interactive mode
 
 ## Medium-Term Goals (v2.0.0)
 
@@ -49,6 +51,7 @@ v1.6.0 (Next 2 months)
 |---- Implement non-interactive mode  ✓ COMPLETED
 |---- Enhance snippet configuration
 |---- Add ASCII charts
+|---- Address security vulnerabilities
 
 v2.0.0 (Q3 2025)
 |---- Implement task dependencies

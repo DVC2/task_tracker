@@ -107,6 +107,13 @@ Your existing tasks and data will be preserved during the upgrade. Version 1.5.0
 - Standardized command names and parameters
 - Enhanced help documentation with better examples
 
+## Recent Fixes (v1.5.1)
+
+### 🛠️ Critical Bug Fixes
+- Fixed initialization error (`ReferenceError: initializeTaskTracker is not defined`) when running `tasktracker init`
+- Implemented missing initialization function in the core tasktracker.js file
+- Improved error handling and documentation for setup process
+
 ### Usage
 
 TaskTracker provides a single unified command that gives you access to all functionality:
