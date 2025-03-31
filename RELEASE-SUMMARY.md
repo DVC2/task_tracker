@@ -1,4 +1,60 @@
-# TaskTracker v2.1.1 Release Summary
+# TaskTracker v2.1.2 Release Summary
+
+## Emergency Fixes
+
+- **Display Function Corrections**: Fixed task display functions for enhanced terminal readability
+- **Test Suite Updates**: Corrected integration and unit tests to work with the new structure
+- **Module Loading Improvements**: Enhanced module loading with better error handling
+- **Command Processing**: Fixed issues with status emoji and terminal display
+
+## Installation
+
+### New Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/DVC2/task_tracker.git
+
+# Install dependencies
+cd task_tracker
+npm install
+
+# Run the setup
+./bin/tasktracker setup
+```
+
+### Updating from v2.1.1
+
+```bash
+# Back up your data
+cp -r .tasktracker/ .tasktracker-backup/
+
+# Pull the latest code
+git pull
+
+# Install updated dependencies
+npm install
+
+# Run the verification script
+./bin/tasktracker verify --fix
+```
+
+For detailed update instructions, see the [Update Guide](docs/guides/UPDATING.md).
+
+## Important Changes
+
+This patch fixes issues with the display functions and test suites. If you were experiencing any of these issues:
+
+- Task status emojis not displaying correctly
+- Terminal display formatting issues
+- Test failures in your project's CI/CD pipelines
+
+These should now be resolved with this update.
+
+## Documentation
+
+- [Update Guide](docs/guides/UPDATING.md) - Follow this guide for updating
+- [AI Integration Guide](docs/AI-INTEGRATION.md) - Updated Claude agent integration details
 
 ## Key Fixes
 

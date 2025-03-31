@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.2] - 2024-03-31
+
+### Fixed
+- Fixed viewTask function to properly display task status and details
+- Added missing utility functions for task display (getStatusEmoji, getPriorityLabel)
+- Fixed colorize function to work with the new directory structure
+- Added proper module imports in integration tests
+
 ## [2.1.1] - 2024-03-31
 
 ### Fixed
