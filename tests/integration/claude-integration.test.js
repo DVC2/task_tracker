@@ -1,14 +1,15 @@
 /**
- * Integration Tests for Claude Agent Functionality
- * 
- * This test suite validates that the Claude-specific commands and templates
- * work correctly with TaskTracker.
+ * TaskTracker Claude Integration Tests
+ * Tests the integration with Claude agents through batch templates
  */
 
-const assert = require('assert');
-const path = require('path');
 const fs = require('fs');
-const { execSync } = require('child_process');
+const path = require('path');
+const { spawn, execSync } = require('child_process');
+const assert = require('assert');
+
+// Import test utilities
+const { describe, it, before, after } = require('mocha');
 
 // Path to the tasktracker CLI and batch processor
 const TASKTRACKER_CLI = path.resolve(__dirname, '../../bin/tasktracker');

@@ -173,7 +173,8 @@ module.exports = ({ describe, test, skip, assert, runCommand }) => {
   
   describe('IDE Integration Features', () => {
     test('list --current returns a single line for status bar', () => {
-      const { runInTemp } = setupTestEnvironment();
+      const testEnv = setupTestEnvironment();
+      const { tempDir, runInTemp } = testEnv;
       
       // First initialize and add a task
       runInTemp('tasktracker', ['init']);
