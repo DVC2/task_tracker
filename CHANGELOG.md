@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2024-03-31
+
+### Fixed
+- Batch command flag handling in any position (especially `--silent`)
+- Task dependency tracking in the reorganized directory structure
+- File linking parameter parsing to prevent flags from being treated as files
+- Added verification script to detect and fix missing files post-update
+- Improved terminal compatibility with option to suppress specific warnings
+
 ## [2.1.0] - 2024-03-31
 
 ### Added

@@ -1,12 +1,12 @@
-# TaskTracker v2.1.0 Release Summary
+# TaskTracker v2.1.1 Release Summary
 
-## Key Features
+## Key Fixes
 
-- **Claude Agent Integration**: Specialized templates and batch commands for cost-efficient AI interactions
-- **Directory Reorganization**: Improved code organization with core, reporting, and integration modules
-- **Security Enhancements**: Better protection of sensitive data and expanded security testing
-- **Cost Optimization**: Advanced batch operations to reduce premium tool call costs by up to 83%
-- **Improved Documentation**: Comprehensive guides and update instructions
+- **Batch Command Enhancement**: Fixed `--silent` flag recognition in batch templates regardless of position
+- **Dependency Tracking Repair**: Fixed `depends-on` feature in the reorganized directory structure
+- **File Linking Improvement**: Corrected parameter parsing to prevent flags from being added as related files
+- **Installation Validation**: Added a verification script to confirm required files are present post-update
+- **Terminal Compatibility**: Improved terminal detection with option to suppress specific warnings
 
 ## Installation
 
@@ -24,7 +24,7 @@ npm install
 ./bin/tasktracker setup
 ```
 
-### Updating from Previous Versions
+### Updating from v2.1.0
 
 ```bash
 # Back up your data
@@ -36,29 +36,41 @@ git pull
 # Install updated dependencies
 npm install
 
-# Verify the installation
-./bin/tasktracker verify
+# Run the new verification script
+./bin/tasktracker verify --fix
 ```
 
 For detailed update instructions, see the [Update Guide](docs/guides/UPDATING.md).
 
-## Claude Agent Integration
+## Important Changes
 
-This version introduces optimized integration with Claude agents in Cursor IDE:
+### Enhanced Batch Command Processing
+
+The batch processor now properly handles flags in any position:
 
 ```bash
-# Use batch templates to reduce premium tool call costs
-task.batch examples/claude-templates/daily-update.txt
+# Now correctly processes flags at the end of commands
+update 1 status done --silent
 ```
 
-Available templates:
-- `daily-update.txt` - Update multiple task statuses efficiently
-- `task-create.txt` - Create multiple related tasks
-- `pr-prepare.txt` - Prepare a task for a pull request
+All Claude templates have been updated to place flags in their recommended positions.
+
+### Improved Migration Experience
+
+The installation verification script now detects and reports missing files:
+
+```bash
+# Check installation integrity
+./bin/tasktracker verify
+
+# Automatically fix common installation issues
+./bin/tasktracker verify --fix
+```
+
+See the [Update Guide](docs/guides/UPDATING.md) for comprehensive information about installation requirements.
 
 ## Documentation
 
-- [Update Guide](docs/guides/UPDATING.md) - Instructions for updating from previous versions
-- [AI Integration Guide](docs/AI-INTEGRATION.md) - Claude agent integration details
-- [Cost Optimization Guide](docs/guides/COST-OPTIMIZATION.md) - Tips for reducing premium tool call costs
-- [IDE Integration Guide](docs/ide-integrations/ide-integration.md) - IDE integration features 
+- [Update Guide](docs/guides/UPDATING.md) - Enhanced with explicit file requirements
+- [AI Integration Guide](docs/AI-INTEGRATION.md) - Updated Claude agent integration details
+- [Cost Optimization Guide](docs/guides/COST-OPTIMIZATION.md) - Added metrics for measuring AI cost savings 

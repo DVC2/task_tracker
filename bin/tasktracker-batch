@@ -112,6 +112,41 @@ function parseCommands(content) {
     .filter(line => line && !line.startsWith('#'));
 }
 
+// Parse command arguments to properly identify flags regardless of position
+function parseCommandArgs(commandLine) {
+  // Split by spaces but preserve quoted strings
+  const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
+  let matches = [];
+  let match;
+  
+  while ((match = regex.exec(commandLine))) {
+    // If the match is a quoted string, use the captured group
+    if (match[1] || match[2]) {
+      matches.push(match[1] || match[2]);
+    } else {
+      matches.push(match[0]);
+    }
+  }
+  
+  // Separate command, flags, and other arguments
+  const command = matches[0];
+  const flags = matches.filter(arg => arg.startsWith('--'));
+  const nonFlagArgs = matches.filter(arg => !arg.startsWith('--') && arg !== command);
+  
+  return {
+    command,
+    flags,
+    nonFlagArgs,
+    allArgs: [...nonFlagArgs, ...flags]
+  };
+}
+
+// Check if a command has a specific flag
+function hasFlag(commandLine, flagName) {
+  const { flags } = parseCommandArgs(commandLine);
+  return flags.includes(flagName);
+}
+
 // Get command type from full command
 function getCommandType(command) {
   const parts = command.split(' ');
@@ -221,17 +256,38 @@ async function executeCommands(commands) {
     try {
       // Handle redirection separately if present
       const hasRedirection = command.includes('>');
-      const actualCommand = hasRedirection ? command.split('>')[0].trim() : command;
+      const commandToProcess = hasRedirection ? command.split('>')[0].trim() : command;
       const redirectTarget = hasRedirection ? command.split('>')[1].trim() : null;
+      
+      // Parse the command arguments to properly handle flags
+      const parsedCommand = parseCommandArgs(commandToProcess);
+      const cmdType = parsedCommand.command;
       
       // Create a unique output file for this command
       const outputFile = path.join(tmpDir, `cmd_${i}.out`);
       
       // Set maximum buffer size based on command type
-      const cmdType = getCommandType(actualCommand);
       const maxBuffer = cmdType === 'list' ? 5 * 1024 * 1024 : 1024 * 1024; // 5MB for list, 1MB for others
       
-      const result = execSync(`${TASKTRACKER_BIN} ${actualCommand} --non-interactive`, { 
+      // Build the command with proper flag handling
+      let execCommand = `${TASKTRACKER_BIN} ${parsedCommand.command}`;
+      
+      // Add non-flag arguments first
+      if (parsedCommand.nonFlagArgs.length > 0) {
+        execCommand += ` ${parsedCommand.nonFlagArgs.join(' ')}`;
+      }
+      
+      // Add flags
+      if (parsedCommand.flags.length > 0) {
+        execCommand += ` ${parsedCommand.flags.join(' ')}`;
+      }
+      
+      // Always add non-interactive flag for batch operations
+      if (!parsedCommand.flags.includes('--non-interactive')) {
+        execCommand += ' --non-interactive';
+      }
+
+      const result = execSync(execCommand, { 
         encoding: 'utf8',
         stdio: ['pipe', 'pipe', 'pipe'],
         maxBuffer: maxBuffer

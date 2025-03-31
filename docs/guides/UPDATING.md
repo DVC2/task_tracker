@@ -2,6 +2,74 @@
 
 This guide provides instructions for upgrading from older versions of TaskTracker to the latest version.
 
+## Updating from Version 2.1.0 to 2.1.1
+
+### Backup Your Data First
+
+Before updating, always create a backup of your task data:
+
+```bash
+# Create a backup of your task data
+cp -r .tasktracker/ .tasktracker-backup/
+```
+
+### Update Steps
+
+1. **Pull the latest code**
+   ```bash
+   git pull origin main
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Run the verification script**
+   ```bash
+   # Check for missing files and fix issues automatically
+   ./bin/tasktracker verify --fix
+   ```
+
+4. **Test basic functionality**
+   ```bash
+   # Make sure tasks can be listed
+   ./bin/tasktracker list
+   ```
+
+### Fixed Issues in 2.1.1
+
+This patch release fixes several issues from v2.1.0:
+
+1. **Batch Command Flags** - The `--silent` flag now works correctly in any position
+2. **Dependency Tracking** - The `depends-on` feature is fixed in the new directory structure
+3. **File Linking** - Corrected parameter parsing to prevent flags from being added as related files
+4. **Installation Validation** - Added verification script to detect and fix missing files
+5. **Terminal Compatibility** - Improved terminal detection with option to suppress warnings
+
+## Required Files
+
+After updating to v2.1.1, make sure the following critical files are present:
+
+- `lib/core/tasktracker.js`
+- `lib/core/file-cache.js`
+- `lib/core/perf-monitor.js`
+- `lib/core/dependency-tracker.js`
+- `lib/core/task-commit.js`
+- `lib/core/task-context.js`
+- `lib/core/quick-task.js`
+- `bin/tasktracker-verify`
+
+The verification script will check for these files and attempt to restore them if missing:
+
+```bash
+# Check installation integrity
+./bin/tasktracker verify
+
+# Automatically fix common installation issues
+./bin/tasktracker verify --fix
+```
+
 ## Updating from Version 1.x to 2.x
 
 ### Backup Your Data First
