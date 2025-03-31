@@ -1,0 +1,9 @@
+quick "Another test task" feature --priority=p2-medium
+quick "Fix documentation typos" docs --priority=p3-low
+update 22 comment "Adding another comment via batch processing"
+list --minimal
+# This batch file tests our optimizations
+quick "Task 1 from optimized batch" feature
+quick "Task 2 from optimized batch" bugfix
+list --minimal
+view 25

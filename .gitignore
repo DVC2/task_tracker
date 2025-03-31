@@ -17,63 +17,78 @@
 # Don't exclude example files
 !examples/tasktracker-data/
 
-# Node.js
+# Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-.npm
-.eslintcache
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
 
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# OS specific files
-.DS_Store
-.directory
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-
-# Editor specific
-.vscode/
-!examples/.vscode/
-!docs/vscode-integration/.vscode/
-.idea/
-*.swp
-*.swo
-*~
-*.sublime-project
-*.sublime-workspace
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-
-# Logs and temp files
-logs/
-*.log
-tmp/
-temp/
-.cache/
-
-# Testing
-coverage/
-.nyc_output/
-# Allow .gitkeep files in test directories
-!tests/temp/.gitkeep
-
-# Build outputs
+# Build output
 dist/
 build/
 out/
 
-# Local SSL certificates
+# Testing
+coverage/
+.nyc_output/
+test-results/
+tests/temp/*
+!tests/temp/.gitkeep
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-*
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Task data - excluding sensitive information
+.tasktracker/tasks.json
+.tasktracker/personal/
+.tasktracker/user-settings.json
+.tasktracker/*credentials*
+.tasktracker/*secret*
+.tasktracker/*token*
+.tasktracker/*password*
+.tasktracker/*.pem
+.tasktracker/*.key
+.tasktracker/*private*
+
+# Environment variables and secrets
+.env
+.env.*
 *.pem
 *.key
-*.crt 
+*credentials*
+*secret*
+*token*
+*password*
+*private*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+
+# Logs
+logs/
+*.log
+
+# Cached data
+.cache/
+.npm/
+.eslintcache
+
+# OS specific
+._*
+.Spotlight-V100
+.Trashes
+
+# Custom exclusions
+snapshots/
+user-settings/ 

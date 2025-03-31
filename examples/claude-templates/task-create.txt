@@ -1,0 +1,17 @@
+# TaskTracker task creation template for Claude agent
+# This template allows Claude to create multiple related tasks in a single tool call
+# Run with: task.batch examples/claude-templates/task-create.txt
+
+# Create main task and subtasks
+quick "Main feature: User authentication" feature --silent
+quick "Implement login form" feature --silent
+quick "Add validation logic" feature --silent
+quick "Create backend API" feature --silent
+
+# Set up dependencies between tasks
+update 2 depends-on 1 --silent
+update 3 depends-on 2 --silent
+update 4 depends-on 1 --silent
+
+# Show created tasks with their relationships
+list --minimal 

@@ -16,6 +16,52 @@ const { spawnSync, execSync } = require('child_process');
 // Find the application root directory
 const appRoot = path.resolve(__dirname, '..');
 const libDir = path.join(appRoot, 'lib');
+const coreDir = path.join(libDir, 'core');
+const reportingDir = path.join(libDir, 'reporting');
+const integrationDir = path.join(libDir, 'integration');
+
+// Try to load modules from reorganized directories first, then fallback to old structure
+function requireWithFallback(modulePath, fallbackPath) {
+  try {
+    return require(modulePath);
+  } catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND') {
+      try {
+        return require(fallbackPath);
+      } catch (fallbackErr) {
+        console.error(`❌ ${path.basename(fallbackPath)} not found!`);
+        throw fallbackErr;
+      }
+    }
+    throw err;
+  }
+}
+
+// Initialize performance monitoring if available
+let perfMonitor;
+try {
+  perfMonitor = requireWithFallback(
+    path.join(coreDir, 'perf-monitor.js'),
+    path.join(libDir, 'perf-monitor.js')
+  );
+  perfMonitor.init({
+    enabled: process.env.TASKTRACKER_PERF_MONITOR !== 'false',
+    logToConsole: process.env.TASKTRACKER_PERF_LOG === 'true'
+  });
+} catch (error) {
+  // Continue without performance monitoring
+}
+
+// Try to load file cache if available
+let fileCache;
+try {
+  fileCache = requireWithFallback(
+    path.join(coreDir, 'file-cache.js'),
+    path.join(libDir, 'file-cache.js')
+  );
+} catch (error) {
+  // Continue without file caching
+}
 
 // Available commands and their scripts
 const COMMANDS = {
@@ -37,6 +83,13 @@ const COMMANDS = {
   'verify': { script: 'tasktracker.js', description: 'Verify TaskTracker installation and configuration' },
   'update-config': { script: 'tasktracker.js', description: 'Update configuration settings' },
   'ignore': { script: 'tasktracker.js', description: 'Manage ignore patterns (.taskignore)' },
+  'archive': { script: 'tasktracker.js', description: 'Archive a task (move to archives)' },
+  'restore': { script: 'tasktracker.js', description: 'Restore a task from archives' },
+  'archives': { script: 'tasktracker.js', description: 'List all archived tasks' },
+  'commit': { script: 'task-commit.js', description: 'Create a Git commit linked to a task' },
+  'context-export': { script: 'task-context.js', description: 'Export task context for PR descriptions or sharing' },
+  'journal': { script: 'task-journal.js', description: 'Track work sessions on tasks' },
+  'performance': { script: 'perf-monitor.js', description: 'View performance metrics and diagnostics' },
   
   // Statistics and reporting
   'snapshot': { script: 'stats-tracker.js', description: 'Take a snapshot of the current project state' },
@@ -90,34 +143,112 @@ function parseGlobalOptions() {
 // Process global options
 const filteredCommandArgs = parseGlobalOptions();
 
+// Start command execution timing
+let commandTimer;
+if (perfMonitor) {
+  commandTimer = perfMonitor.startTimer(`command_${command || 'help'}`);
+}
+
 // Show help if no command is provided
 if (!command || COMMANDS[command]?.alias === 'help') {
   showHelp();
+  if (perfMonitor) {
+    commandTimer();
+    perfMonitor.shutdown();
+  }
   process.exit(0);
 }
 
 // Special case for help command directly
 if (command === 'help' || command === '-h' || command === '--help') {
   showHelp();
+  if (perfMonitor) {
+    commandTimer();
+    perfMonitor.shutdown();
+  }
+  process.exit(0);
+}
+
+// Special case for performance command
+if (command === 'performance') {
+  if (!perfMonitor) {
+    console.error('❌ Performance monitoring not available. Make sure lib/perf-monitor.js exists.');
+    process.exit(1);
+  }
+  
+  const report = perfMonitor.generateReport();
+  console.log('\n📊 TaskTracker Performance Report');
+  console.log('--------------------------------');
+  
+  if (globalOptions.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    console.log(`Timers recorded: ${Object.keys(report.timers).length}`);
+    console.log(`Counters recorded: ${Object.keys(report.counters).length}`);
+    
+    // Show top 5 slowest operations
+    const timers = Object.entries(report.timers)
+      .sort((a, b) => b[1].avg - a[1].avg)
+      .slice(0, 5);
+    
+    if (timers.length > 0) {
+      console.log('\nSlowest Operations:');
+      timers.forEach(([name, stats]) => {
+        console.log(`  ${name}: ${stats.avg.toFixed(2)}ms avg (${stats.count} calls, max: ${stats.max.toFixed(2)}ms)`);
+      });
+    }
+    
+    // Show resource usage if available
+    if (report.resourceUsage) {
+      console.log('\nResource Usage:');
+      console.log(`  Memory: ${report.resourceUsage.memory.heapUsed.toFixed(2)}MB used / ${report.resourceUsage.memory.heapTotal.toFixed(2)}MB total`);
+      console.log(`  RSS: ${report.resourceUsage.memory.rss.toFixed(2)}MB`);
+    }
+  }
+  
+  // Save full report
+  perfMonitor.saveMetrics();
+  perfMonitor.shutdown();
+  
+  commandTimer();
   process.exit(0);
 }
 
 // Special case for quick task (pass all arguments)
 if (command === 'quick') {
-  const quickTaskPath = path.join(libDir, 'quick-task.js');
+  const quickTaskPath = path.join(coreDir, 'quick-task.js');
+  const fallbackPath = path.join(libDir, 'quick-task.js');
+  
+  let scriptPath;
   if (fs.existsSync(quickTaskPath)) {
-    // Add global options as arguments
-    const globalFlags = [];
-    if (globalOptions.silent) globalFlags.push('--silent');
-    if (globalOptions.json) globalFlags.push('--json');
-    if (globalOptions.nonInteractive) globalFlags.push('--non-interactive');
-    
-    const result = spawnSync('node', [quickTaskPath, ...commandArgs, ...globalFlags], { stdio: 'inherit' });
-    process.exit(result.status);
+    scriptPath = quickTaskPath;
+  } else if (fs.existsSync(fallbackPath)) {
+    scriptPath = fallbackPath;
   } else {
     console.error('❌ quick-task.js not found!');
+    if (perfMonitor) perfMonitor.shutdown();
     process.exit(1);
   }
+  
+  // Add global options as arguments
+  const globalFlags = [];
+  if (globalOptions.silent) globalFlags.push('--silent');
+  if (globalOptions.json) globalFlags.push('--json');
+  if (globalOptions.nonInteractive) globalFlags.push('--non-interactive');
+  
+  // Track performance
+  if (perfMonitor) {
+    perfMonitor.incrementCounter('quick_task_calls');
+  }
+  
+  const result = spawnSync('node', [scriptPath, ...commandArgs, ...globalFlags], { stdio: 'inherit' });
+  
+  // Cleanup and exit
+  if (commandTimer) commandTimer();
+  if (perfMonitor) perfMonitor.shutdown();
+  if (fileCache) fileCache.clearCache();
+  
+  process.exit(result.status);
 }
 
 // Execute the appropriate script for the command
@@ -131,30 +262,77 @@ if (COMMANDS[command]) {
     if (aliasedCmd) {
       // Execute the aliased command
       const result = spawnSync(process.argv[0], [process.argv[1], cmd.alias, ...commandArgs], { stdio: 'inherit' });
+      
+      // Cleanup and exit
+      if (commandTimer) commandTimer();
+      if (perfMonitor) perfMonitor.shutdown();
+      if (fileCache) fileCache.clearCache();
+      
       process.exit(result.status);
     }
   } else if (cmd.shell) {
     // Execute shell command
     const scriptPath = path.join(libDir, cmd.script);
+    const integrationScriptPath = path.join(integrationDir, cmd.script);
+    
+    let execPath;
     if (fs.existsSync(scriptPath)) {
-      try {
-        execSync(`bash ${scriptPath} ${commandArgs.join(' ')}`, { stdio: 'inherit' });
-      } catch (error) {
-        process.exit(1);
-      }
+      execPath = scriptPath;
+    } else if (fs.existsSync(integrationScriptPath)) {
+      execPath = integrationScriptPath;
     } else {
       console.error(`❌ ${cmd.script} not found!`);
+      if (perfMonitor) perfMonitor.shutdown();
+      process.exit(1);
+    }
+    
+    try {
+      if (perfMonitor) {
+        perfMonitor.incrementCounter('shell_command_calls');
+      }
+      
+      execSync(`bash ${execPath} ${commandArgs.join(' ')}`, { stdio: 'inherit' });
+      
+      // Cleanup and exit
+      if (commandTimer) commandTimer();
+      if (perfMonitor) perfMonitor.shutdown();
+      if (fileCache) fileCache.clearCache();
+      
+      process.exit(0);
+    } catch (error) {
+      if (perfMonitor) perfMonitor.shutdown();
+      if (fileCache) fileCache.clearCache();
       process.exit(1);
     }
   } else {
     // Execute Node.js script
-    const scriptPath = path.join(libDir, cmd.script);
-    if (fs.existsSync(scriptPath)) {
+    // Look for script in reorganized directories first, then fallback to lib/
+    const scriptBaseName = cmd.script;
+    const originalScriptPath = path.join(libDir, scriptBaseName);
+    
+    // Define potential paths in the reorganized structure
+    const potentialPaths = [
+      path.join(coreDir, scriptBaseName),            // Core functionality
+      path.join(reportingDir, scriptBaseName),       // Reporting functionality
+      path.join(integrationDir, scriptBaseName),     // Integration functionality
+      originalScriptPath                             // Original location (fallback)
+    ];
+    
+    // Find the first path that exists
+    let scriptPath = null;
+    for (const p of potentialPaths) {
+      if (fs.existsSync(p)) {
+        scriptPath = p;
+        break;
+      }
+    }
+    
+    if (scriptPath) {
       // For commands that use the original scripts, translate the command
       let scriptCommand = cmd.command || command;
-      if (cmd.script === 'tasktracker.js' && command !== 'init') {
+      if (scriptBaseName === 'tasktracker.js' && command !== 'init') {
         // Use the command as-is for tasktracker.js
-      } else if (cmd.script === 'stats-tracker.js') {
+      } else if (scriptBaseName === 'stats-tracker.js') {
         // For stats commands, the command becomes the first argument
         filteredCommandArgs.unshift(scriptCommand);
         scriptCommand = '';
@@ -166,17 +344,30 @@ if (COMMANDS[command]) {
       if (globalOptions.json) globalFlags.push('--json');
       if (globalOptions.nonInteractive) globalFlags.push('--non-interactive');
       
+      if (perfMonitor) {
+        perfMonitor.incrementCounter('script_calls');
+        perfMonitor.recordHistogram('args_count', filteredCommandArgs.length);
+      }
+      
       const cmdArgs = [scriptPath, scriptCommand, ...globalFlags, ...filteredCommandArgs].filter(Boolean);
       const result = spawnSync('node', cmdArgs, { stdio: 'inherit' });
+      
+      // Cleanup and exit
+      if (commandTimer) commandTimer();
+      if (perfMonitor) perfMonitor.shutdown();
+      if (fileCache) fileCache.clearCache();
+      
       process.exit(result.status);
     } else {
-      console.error(`❌ ${cmd.script} not found!`);
+      console.error(`❌ ${scriptBaseName} not found!`);
+      if (perfMonitor) perfMonitor.shutdown();
       process.exit(1);
     }
   }
 } else {
   console.error(`❌ Unknown command: ${command}`);
   showHelp();
+  if (perfMonitor) perfMonitor.shutdown();
   process.exit(1);
 }
 
@@ -211,6 +402,9 @@ function showHelp() {
   console.log('  list [status]            List all tasks or filter by status');
   console.log('  status                   Alias for list - show task status');
   console.log('  view <id>                View details of a specific task');
+  console.log('  archive <id> [reason]    Archive a task (move to archives)');
+  console.log('  restore <id>             Restore a task from archives');
+  console.log('  archives                 List all archived tasks');
   console.log('  changes [path]           Track file changes (works without Git)');
   console.log('  files [path]             Alias for changes - track file changes');
   console.log('  release [version]        Create a new release');
@@ -218,6 +412,14 @@ function showHelp() {
   console.log('  context [id]             Alias for ai-context');
   console.log('  code-health [path]       Analyze code health metrics for technical debt');
   console.log('  health [path]            Alias for code-health');
+  console.log('  commit <id> [message]    Create a Git commit linked to a task');
+  console.log('  context-export <id>      Export task context for PR descriptions or sharing');
+  console.log('  journal [session]         Track work sessions on tasks');
+  console.log('    journal start <id>       Start a work session on a task');
+  console.log('    journal end [notes]      End the current work session');
+  console.log('    journal show             Show recent work sessions');
+  console.log('    journal summary          Show time summary across tasks');
+  console.log('  performance              View performance metrics and diagnostics');
   
   console.log('\nStatistics and Reporting:');
   console.log('  snapshot                 Take a snapshot of the current project state');

@@ -32,3 +32,15 @@ yarn-debug.log*
 yarn-error.log*
 # Add your custom ignore patterns below
 test-output/**
+# Additional security patterns
+.env.*
+*credentials*
+*secret*
+*token*
+*password*
+*.pem
+*.key
+*private*
+.tasktracker/user-settings.json
+# Ensure no personal/sensitive data is tracked
+.tasktracker/personal/

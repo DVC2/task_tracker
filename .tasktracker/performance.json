@@ -1,0 +1,14 @@
+{
+  "timestamp": 1743362742272,
+  "system": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "nodeVersion": "v23.9.0",
+    "cpus": 14,
+    "totalMemory": 24576
+  },
+  "timers": {},
+  "counters": {},
+  "histograms": {},
+  "resourceUsage": []
+}

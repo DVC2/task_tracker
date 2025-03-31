@@ -86,6 +86,75 @@ AI assistants can access TaskTracker's documentation through:
    cat QUICK-GUIDE.md
    ```
 
+## Claude Agent Integration
+
+Claude agents in Cursor can directly leverage TaskTracker through the integrated .cursorrules file. This provides a powerful, cost-optimized workflow:
+
+### Using Task Context Commands
+
+Claude agents should use the dedicated context commands:
+
+```
+task.context 12  # Get full context for task #12
+```
+
+### Cost-Optimized Batch Processing
+
+Claude should always use batch commands to minimize premium tool calls:
+
+```
+task.batch my_commands.txt
+```
+
+### Minimal Output Options
+
+Claude should prefer minimal output flags to reduce token usage:
+
+```
+task.get_tasks  # Already uses --minimal flag
+```
+
+### Automatic File Tracking
+
+Claude can automatically track file changes and link them to tasks:
+
+```
+task.track_changes
+task.add_file 12  # Add current file to task #12
+```
+
+### Documentation Generation
+
+Claude can generate task-aware documentation comments:
+
+```
+task.doc_comment
+```
+
+### PR Description Generation
+
+When creating pull requests, Claude can generate descriptions from tasks:
+
+```
+task.pr_desc 12
+```
+
+### Claude-Specific Templates
+
+To help Claude agents work efficiently with TaskTracker while minimizing costs, the project includes ready-to-use templates:
+
+- **examples/claude-templates/daily-update.txt** - Update multiple task statuses in one operation
+- **examples/claude-templates/task-create.txt** - Create multiple related tasks with dependencies
+- **examples/claude-templates/pr-prepare.txt** - Prepare a task for a pull request
+
+These templates can be invoked with a single tool call:
+
+```
+task.batch examples/claude-templates/daily-update.txt
+```
+
+Claude agents should always prefer these templates for common operations to minimize premium tool call costs.
+
 ## Best Practices
 
 1. **Always reference task IDs** when discussing work with AI

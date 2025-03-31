@@ -1,0 +1,19 @@
+# TaskTracker PR preparation template for Claude agent
+# This template helps Claude prepare task info for a PR in a single tool call
+# Run with: task.batch examples/claude-templates/pr-prepare.txt
+
+# Get task details
+view 5
+
+# Update task status to review 
+update 5 status review --silent
+
+# Check file changes associated with task
+changes
+
+# Track any final files
+# addfile 5 path/to/file.js --silent
+
+# Generate PR description at the end
+# This command must be run separately but is included here as a reminder
+# task.pr_desc 5 

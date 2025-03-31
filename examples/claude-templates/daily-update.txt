@@ -1,0 +1,14 @@
+# TaskTracker daily update template for Claude agent
+# This template allows Claude to show and update multiple tasks in a single tool call
+# Run with: task.batch examples/claude-templates/daily-update.txt
+
+# First show current tasks
+list --minimal
+
+# Update task statuses (replace IDs with actual task IDs)
+update 1 status done --silent
+update 2 status in-progress --silent
+update 3 status in-progress --silent
+
+# Show updated task list
+list --minimal 

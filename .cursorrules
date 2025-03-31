@@ -1,8 +1,8 @@
-# TaskTracker cursor integration rules
-# These rules provide enhanced TaskTracker functionality within Cursor IDE
+# TaskTracker Cursor Integration
+# This file enhances TaskTracker functionality within Cursor IDE
 
 # Get current tasktracker tasks
-task.get_tasks = tasktracker list
+task.get_tasks = tasktracker list --minimal
 
 # Get task details
 task.view_task = tasktracker view $1
@@ -25,8 +25,72 @@ task.add_file = tasktracker update $1 addfile "${cursor.file}"
 # Track file changes and link to tasks
 task.track_changes = tasktracker changes
 
-# Show statistics (when implemented)
+# Show statistics
 task.stats = tasktracker snapshot
+
+# Generate task context for AI assistant
+task.context = tasktracker ai-context $1
+
+# Show burndown chart
+task.burndown = ./lib/burndown-chart.js --format=ascii
+
+# Run batch commands to save premium tool calls
+task.batch = ./bin/tasktracker-batch $1
+
+# Show dependencies
+task.deps = tasktracker list --json | jq '[.tasks[] | select(.dependencies != null or .blockedBy != null)]'
+
+# Create a PR description from task
+task.pr_desc = |
+  function generatePrDescription() {
+    const taskId = process.argv[2];
+    if (!taskId) {
+      console.log("Usage: task.pr_desc <task_id>");
+      return;
+    }
+    
+    const { execSync } = require('child_process');
+    const result = execSync(`tasktracker view ${taskId} --json`).toString();
+    const task = JSON.parse(result);
+    
+    let description = `## Task #${task.id}: ${task.title}\n\n`;
+    
+    if (task.description) {
+      description += `${task.description}\n\n`;
+    }
+    
+    description += `**Category:** ${task.category}\n`;
+    
+    if (task.priority) {
+      description += `**Priority:** ${task.priority}\n`;
+    }
+    
+    if (task.relatedFiles && task.relatedFiles.length > 0) {
+      description += `\n### Files Changed\n`;
+      task.relatedFiles.forEach(file => {
+        description += `- \`${file}\`\n`;
+      });
+    }
+    
+    if (task.checklists && task.checklists.length > 0) {
+      description += `\n### Checklist\n`;
+      
+      task.checklists.forEach(checklist => {
+        description += `\n#### ${checklist.title}\n`;
+        
+        checklist.items.forEach(item => {
+          const checkbox = item.completed ? 'x' : ' ';
+          description += `- [${checkbox}] ${item.text}\n`;
+        });
+      });
+    }
+    
+    description += `\nResolves #${task.id}`;
+    
+    console.log(description);
+  }
+  
+  generatePrDescription();
 
 # When creating a cursor task with TaskTracker, this adds a helpful comment template
 create_task.template = """
@@ -37,6 +101,24 @@ create_task.template = """
  * 
  * Description:
  * ${task.description}
+ * 
+ * Related Files:
+ * ${task.relatedFiles?.join('\n * ')}
+ * 
+ * Dependencies:
+ * ${task.dependencies?.map(id => `#${id}`).join(', ')}
+ */
+"""
+
+# Generate documentation comment
+task.doc_comment = """
+/**
+ * ${1:Function description}
+ * 
+ * Related to Task #${2:taskId}: ${3:taskTitle}
+ * 
+ * @param {${4:Type}} ${5:paramName} - ${6:Description}
+ * @returns {${7:Type}} ${8:Description}
  */
 """
 
@@ -44,6 +126,10 @@ create_task.template = """
 key.ctrl+alt+t = task.get_tasks
 key.ctrl+alt+n = task.add_quick "New task from Cursor" feature
 key.ctrl+alt+c = task.track_changes
+key.ctrl+alt+v = task.view_task ${cursor.selected}
+key.ctrl+alt+d = task.status_done ${cursor.selected}
+key.ctrl+shift+b = task.burndown --format=ascii
 
 # Add cursor status bar integration
 statusbar.left = "TaskTracker: ${task.current_task || 'No task'}"
+statusbar.right = "Priority: ${task.current_priority || 'None'}"

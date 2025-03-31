@@ -1,6 +1,6 @@
 {
   "name": "tasktracker-cli",
-  "version": "1.5.0",
+  "version": "2.1.0",
   "description": "A lightweight task management system for developers that helps track technical debt",
   "main": "bin/tasktracker",
   "bin": {
@@ -42,12 +42,13 @@
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^9.4.1",
-    "inquirer": "^8.2.5",
-    "fs-extra": "^10.1.0"
+    "fs-extra": "^10.1.0",
+    "inquirer": "^8.2.5"
   },
   "devDependencies": {
-    "jest": "^29.3.1",
     "eslint": "^8.29.0",
+    "jest": "^29.3.1",
+    "mocha": "^11.1.0",
     "rimraf": "^3.0.2"
   },
   "engines": {
