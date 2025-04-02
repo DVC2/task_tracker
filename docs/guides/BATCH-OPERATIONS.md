@@ -145,13 +145,13 @@ You can add task dependencies in batch by creating a script:
 # Example: Set up a dependency chain between tasks
 
 # Task 3 depends on Task 2
-tasktracker update 3 depends-on 2 --silent
+tt update 3 depends-on 2 --silent
 
 # Task 2 depends on Task 1
-tasktracker update 2 depends-on 1 --silent
+tt update 2 depends-on 1 --silent
 
 # Show the tasks with their dependencies
-tasktracker view 3
+tt view 3
 ```
 
 ## Adding Custom Fields in Batch
@@ -163,17 +163,17 @@ You can add custom fields to multiple tasks at once:
 # Example: Add story points to multiple tasks
 
 # Add story points
-tasktracker update 1 custom story-points 3 --silent
-tasktracker update 2 custom story-points 5 --silent
-tasktracker update 3 custom story-points 8 --silent
+tt update 1 custom story-points 3 --silent
+tt update 2 custom story-points 5 --silent
+tt update 3 custom story-points 8 --silent
 
 # Add assigned team members
-tasktracker update 1 custom assigned-to "Alice" --silent
-tasktracker update 2 custom assigned-to "Bob" --silent
-tasktracker update 3 custom assigned-to "Charlie" --silent
+tt update 1 custom assigned-to "Alice" --silent
+tt update 2 custom assigned-to "Bob" --silent
+tt update 3 custom assigned-to "Charlie" --silent
 
 # Show the tasks with their custom fields
-tasktracker list --full
+tt list --full
 ```
 
 ## Advanced Usage
@@ -229,7 +229,7 @@ For JSON files:
 ### Other Issues
 
 - Make sure the script is executable (`chmod +x bin/batch-tasks.sh`)
-- Verify TaskTracker is properly initialized (`tasktracker init`)
+- Verify TaskTracker is properly initialized (`tt init`)
 - Check for file path issues (run from project root)
 
 ## Examples

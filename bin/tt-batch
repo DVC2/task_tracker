@@ -1,0 +1,458 @@
+#!/usr/bin/env node
+
+/**
+ * TaskTracker Batch Processor (tt-batch)
+ * -------------------------------------
+ * Minimizes premium tool calls by processing multiple commands in a single execution
+ * 
+ * Usage:
+ *   tt-batch <batch-file>
+ *   tt-batch --stdin
+ *   
+ * Example batch file:
+ *   # Lines starting with # are comments
+ *   # Each line is a separate command
+ *   quick "Fix login button" bugfix
+ *   quick "Add user profile" feature
+ *   update 1 status in-progress
+ *   update 2 priority p1-high
+ *   list --json > tasks.json
+ * 
+ * Benefits:
+ *   - Reduces premium API costs by batching commands
+ *   - Improves performance through command grouping
+ *   - Supports redirecting output to files
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { execSync, spawn } = require('child_process');
+const readline = require('readline');
+const crypto = require('crypto');
+const os = require('os');
+
+// Load file-cache if available
+let fileCache;
+try {
+  fileCache = require('../lib/file-cache');
+} catch (error) {
+  // Silently continue without caching if not available
+}
+
+// Get the path to the TaskTracker binaries
+const TASKTRACKER_BIN = path.join(__dirname, 'tasktracker');
+const TT_BIN = path.join(__dirname, 'tt');
+
+// Check if either tt or tasktracker exists
+if (!fs.existsSync(TT_BIN) && !fs.existsSync(TASKTRACKER_BIN)) {
+  console.error('❌ Error: TaskTracker command not found');
+  process.exit(1);
+}
+
+// Use tt if available, fall back to tasktracker
+const COMMAND_BIN = fs.existsSync(TT_BIN) ? TT_BIN : TASKTRACKER_BIN;
+
+// Track statistics
+const stats = {
+  commandsRun: 0,
+  batchesSaved: 0,
+  estimatedCostSavings: 0,
+  executionTime: 0,
+  commandsByType: {}
+};
+
+// Execution optimization - group similar commands for better performance
+const commandGroups = {
+  read: ['list', 'view', 'status', 'archives'],
+  write: ['quick', 'add', 'update']
+};
+
+// Cache for command outputs
+const outputCache = new Map();
+
+// Process a batch file
+async function processBatchFile(filename) {
+  console.log(`📦 Processing batch file: ${filename}`);
+  
+  try {
+    // Check file size first
+    const stats = fs.statSync(filename);
+    if (stats.size > 10 * 1024 * 1024) { // 10 MB limit
+      console.warn('⚠️ Warning: Batch file is larger than 10MB. Processing may take longer.');
+    }
+    
+    const fileContents = fs.readFileSync(filename, 'utf8');
+    const commands = parseCommands(fileContents);
+    await executeCommands(commands);
+  } catch (error) {
+    console.error(`❌ Error processing batch file: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+// Process commands from stdin
+async function processStdin() {
+  console.log('📦 Reading commands from stdin (press Ctrl+D to finish):');
+  
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: '> '
+  });
+  
+  const commands = [];
+  
+  rl.prompt();
+  
+  for await (const line of rl) {
+    if (line.trim() && !line.startsWith('#')) {
+      commands.push(line.trim());
+    }
+    rl.prompt();
+  }
+  
+  console.log('\nProcessing commands...');
+  await executeCommands(commands);
+}
+
+// Parse commands from a string
+function parseCommands(content) {
+  return content.split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'));
+}
+
+// Parse command arguments to properly identify flags regardless of position
+function parseCommandArgs(commandLine) {
+  // Split by spaces but preserve quoted strings
+  const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
+  let matches = [];
+  let match;
+  
+  while ((match = regex.exec(commandLine))) {
+    // If the match is a quoted string, use the captured group
+    if (match[1] || match[2]) {
+      matches.push(match[1] || match[2]);
+    } else {
+      matches.push(match[0]);
+    }
+  }
+  
+  // Separate command, flags, and other arguments
+  const command = matches[0];
+  const flags = matches.filter(arg => arg.startsWith('--'));
+  const nonFlagArgs = matches.filter(arg => !arg.startsWith('--') && arg !== command);
+  
+  return {
+    command,
+    flags,
+    nonFlagArgs,
+    allArgs: [...nonFlagArgs, ...flags]
+  };
+}
+
+// Check if a command has a specific flag
+function hasFlag(commandLine, flagName) {
+  const { flags } = parseCommandArgs(commandLine);
+  return flags.includes(flagName);
+}
+
+// Get command type from full command
+function getCommandType(command) {
+  const parts = command.split(' ');
+  return parts[0];
+}
+
+// Group similar commands for optimization
+function groupCommands(commands) {
+  const groupedCommands = [];
+  const current = { type: null, commands: [] };
+  
+  commands.forEach(command => {
+    const cmdType = getCommandType(command);
+    
+    // Group by read/write operations
+    let opType = 'other';
+    for (const [type, cmds] of Object.entries(commandGroups)) {
+      if (cmds.includes(cmdType)) {
+        opType = type;
+        break;
+      }
+    }
+    
+    // If starting a new group
+    if (current.type !== opType) {
+      if (current.commands.length > 0) {
+        groupedCommands.push({ ...current });
+      }
+      current.type = opType;
+      current.commands = [command];
+    } else {
+      current.commands.push(command);
+    }
+  });
+  
+  // Add the last group
+  if (current.commands.length > 0) {
+    groupedCommands.push({ ...current });
+  }
+  
+  return groupedCommands;
+}
+
+// Check if a command will modify data
+function isWriteCommand(command) {
+  const cmdType = getCommandType(command);
+  return commandGroups.write.includes(cmdType);
+}
+
+// Execute a list of commands
+async function executeCommands(commands) {
+  if (commands.length === 0) {
+    console.log('⚠️ No commands to execute');
+    return;
+  }
+  
+  console.log(`🔄 Executing ${commands.length} commands...`);
+  
+  // Capture start time
+  const startTime = Date.now();
+  
+  // Group commands for optimization if more than 3 commands
+  let commandsToExecute = commands;
+  if (commands.length > 3) {
+    const groupedCommands = groupCommands(commands);
+    if (groupedCommands.length < commands.length) {
+      console.log(`📊 Optimized ${commands.length} commands into ${groupedCommands.length} groups`);
+      // Flatten grouped commands
+      commandsToExecute = groupedCommands.flatMap(group => group.commands);
+    }
+  }
+  
+  // Track command types for statistics
+  commandsToExecute.forEach(command => {
+    const cmdType = getCommandType(command);
+    stats.commandsByType[cmdType] = (stats.commandsByType[cmdType] || 0) + 1;
+  });
+  
+  // Create temporary directory for output files if needed
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tasktracker-'));
+  
+  // Use concurrency for read-only commands if available
+  const concurrency = Math.min(4, Math.max(1, Math.floor(os.cpus().length / 2)));
+  let runningCount = 0;
+  
+  // Clear cache before starting
+  if (fileCache) {
+    fileCache.clearCache();
+  }
+  
+  // Execute commands
+  for (let i = 0; i < commandsToExecute.length; i++) {
+    const command = commandsToExecute[i];
+    
+    // Hash the command for caching
+    const commandHash = crypto.createHash('md5').update(command).digest('hex');
+    
+    // Skip if the exact same command was already executed in this batch and doesn't modify data
+    if (!isWriteCommand(command) && outputCache.has(commandHash)) {
+      console.log(`[${i+1}/${commandsToExecute.length}] Skipping cached command: ${command}`);
+      stats.commandsRun++;
+      continue;
+    }
+    
+    process.stdout.write(`[${i+1}/${commandsToExecute.length}] Executing: ${command}`);
+    
+    try {
+      // Handle redirection separately if present
+      const hasRedirection = command.includes('>');
+      const commandToProcess = hasRedirection ? command.split('>')[0].trim() : command;
+      const redirectTarget = hasRedirection ? command.split('>')[1].trim() : null;
+      
+      // Parse the command arguments to properly handle flags
+      const parsedCommand = parseCommandArgs(commandToProcess);
+      const cmdType = parsedCommand.command;
+      
+      // Create a unique output file for this command
+      const outputFile = path.join(tmpDir, `cmd_${i}.out`);
+      
+      // Set maximum buffer size based on command type
+      const maxBuffer = cmdType === 'list' ? 5 * 1024 * 1024 : 1024 * 1024; // 5MB for list, 1MB for others
+      
+      // Build the command with proper flag handling
+      let execCommand = `${COMMAND_BIN} ${parsedCommand.command}`;
+      
+      // Add non-flag arguments first
+      if (parsedCommand.nonFlagArgs.length > 0) {
+        execCommand += ` ${parsedCommand.nonFlagArgs.join(' ')}`;
+      }
+      
+      // Add flags
+      if (parsedCommand.flags.length > 0) {
+        execCommand += ` ${parsedCommand.flags.join(' ')}`;
+      }
+      
+      // Always add non-interactive flag for batch operations
+      if (!parsedCommand.flags.includes('--non-interactive')) {
+        execCommand += ' --non-interactive';
+      }
+
+      const result = execSync(execCommand, { 
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        maxBuffer: maxBuffer
+      });
+      
+      process.stdout.write(` ✅\n`);
+      
+      // Cache the output for non-write commands
+      if (!isWriteCommand(command)) {
+        outputCache.set(commandHash, result);
+      } else if (fileCache) {
+        // Clear cache after write operations
+        fileCache.clearCache();
+      }
+      
+      // Handle redirection if needed
+      if (hasRedirection && redirectTarget) {
+        try {
+          fs.writeFileSync(redirectTarget, result);
+          console.log(`[Output redirected to ${redirectTarget}]`);
+        } catch (redirectError) {
+          console.error(`Error writing to ${redirectTarget}: ${redirectError.message}`);
+        }
+      } else if (result.trim()) {
+        // Show truncated output for non-redirected commands
+        const outputLines = result.split('\n');
+        if (outputLines.length > 5) {
+          console.log(outputLines.slice(0, 3).join('\n') + '\n... [truncated output] ...\n' + outputLines.slice(-2).join('\n'));
+        } else {
+          console.log(result);
+        }
+      }
+      
+      stats.commandsRun++;
+    } catch (error) {
+      process.stdout.write(` ❌\n`);
+      console.error(`Error executing command: ${command}`);
+      
+      if (error.stderr) {
+        console.error(`Error details: ${error.stderr.toString()}`);
+      }
+      
+      if (error.stdout) {
+        console.error(`Output: ${error.stdout.toString()}`);
+      }
+      
+      // Ask user if they want to continue despite error
+      const readline = require('readline').createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+      
+      const answer = await new Promise((resolve) => {
+        readline.question('Continue batch processing? (y/n) ', resolve);
+      });
+      
+      readline.close();
+      
+      if (answer.toLowerCase() !== 'y') {
+        console.log('❌ Batch processing aborted');
+        break;
+      }
+    }
+  }
+  
+  // Clean up temporary directory
+  try {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  } catch (error) {
+    // Ignore cleanup errors
+  }
+  
+  // Calculate statistics
+  stats.executionTime = Date.now() - startTime;
+  stats.batchesSaved = commands.length - 1;
+  stats.estimatedCostSavings = stats.batchesSaved * 0.05; // Assuming 5 cents per call
+  
+  // Print summary
+  console.log('\n📊 Batch Processing Summary:');
+  console.log(`Commands executed: ${stats.commandsRun}`);
+  console.log(`Batches saved: ${stats.batchesSaved}`);
+  console.log(`Execution time: ${(stats.executionTime / 1000).toFixed(2)} seconds`);
+  console.log(`Estimated cost savings: $${stats.estimatedCostSavings.toFixed(2)} (at $0.05 per tool call)`);
+  
+  // Show command type breakdown if varied commands
+  if (Object.keys(stats.commandsByType).length > 1) {
+    console.log('\nCommand type breakdown:');
+    Object.entries(stats.commandsByType).forEach(([type, count]) => {
+      console.log(`  ${type}: ${count} commands`);
+    });
+  }
+}
+
+// Main function
+async function main() {
+  const args = process.argv.slice(2);
+  
+  if (args.length === 0) {
+    console.log(`
+TaskTracker Batch Processor (tt-batch)
+-------------------------------------
+Minimizes premium tool calls by processing multiple commands in a single execution
+
+Usage:
+  tt-batch <batch-file>
+  tt-batch --stdin
+
+Examples:
+  tt-batch commands.txt
+  echo "quick \\"Fix login\\" bugfix" | tt-batch --stdin
+  cat commands.txt | tt-batch --stdin
+
+Description:
+  Processes multiple TaskTracker commands in a single execution,
+  minimizing premium tool calls (which cost $0.05 each).
+  
+  Batch file format:
+    - One command per line
+    - Lines starting with # are treated as comments
+    - Each command is executed as if running: tasktracker <command>
+    
+  Example batch file:
+    # Create two tasks
+    quick "Fix login button" bugfix
+    quick "Add user profile" feature
+    
+    # Update statuses
+    update 1 status in-progress
+    update 2 priority p1-high
+    
+    # Generate output
+    list --json > tasks.json
+    
+  Optimizations:
+    - Groups similar commands for better performance
+    - Caches repetitive read commands
+    - Intelligently manages file access
+    - Supports redirection to files
+`);
+    process.exit(0);
+  }
+  
+  if (args[0] === '--stdin') {
+    await processStdin();
+  } else {
+    const batchFile = args[0];
+    if (!fs.existsSync(batchFile)) {
+      console.error(`❌ Error: Batch file not found: ${batchFile}`);
+      process.exit(1);
+    }
+    await processBatchFile(batchFile);
+  }
+}
+
+main().catch(err => {
+  console.error('❌ Unexpected error:', err);
+  process.exit(1);
+}); 

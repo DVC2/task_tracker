@@ -55,8 +55,8 @@ The HTML reports now show task dependencies and relationships, helping you under
 For terminals with limited formatting capabilities or for use in CI/CD pipelines, use the new `--plain` mode:
 
 ```bash
-tasktracker list --plain
-tasktracker view 5 --plain
+tt list --plain
+tt view 5 --plain
 ```
 
 This mode:
@@ -77,10 +77,10 @@ To manually control the layout:
 
 ```bash
 # Force minimal output for narrow terminals
-tasktracker list --minimal
+tt list --minimal
 
 # Use plain text with no formatting
-tasktracker list --plain
+tt list --plain
 ```
 
 ## IDE Integration Improvements
@@ -124,7 +124,7 @@ You can now generate standardized code comments linked to specific tasks:
 Generate professional PR descriptions from task data:
 
 ```bash
-task.pr_desc 42
+tt.pr_desc 42
 ```
 
 This generates a formatted markdown description including:
@@ -142,16 +142,16 @@ TaskTracker now supports pagination for large task lists:
 
 ```bash
 # View first page of tasks (default 20 per page)
-tasktracker list
+tt list
 
 # View specific page
-tasktracker list --page=2
+tt list --page=2
 
 # Change page size
-tasktracker list --page-size=50
+tt list --page-size=50
 
 # Navigate through filtered results
-tasktracker list --category=feature --page=2
+tt list --category=feature --page=2
 ```
 
 This significantly improves performance for projects with hundreds of tasks.
@@ -182,10 +182,10 @@ You can now perform operations on multiple tasks at once:
 
 ```bash
 # Update status of multiple tasks
-tasktracker update 1,2,3 status in-progress
+tt update 1,2,3 status in-progress
 
 # Add the same file to multiple tasks
-tasktracker update 1,2,3 add-file src/component.js
+tt update 1,2,3 add-file src/component.js
 ```
 
 ### Enhanced Search Filtering
@@ -201,7 +201,7 @@ Example:
 
 ```bash
 # Find all high-priority bugs assigned to a specific person
-tasktracker list --category=bugfix --priority=p1-high --custom=assignee="Jane Doe"
+tt list --category=bugfix --priority=p1-high --custom=assignee="Jane Doe"
 ```
 
 ### Output Redirection
@@ -210,10 +210,10 @@ TaskTracker supports output redirection and piping:
 
 ```bash
 # Save task data as JSON
-tasktracker list --json > tasks.json
+tt list --json > tasks.json
 
 # Process with other tools
-tasktracker list --json | jq '.tasks | map(select(.status == "in-progress"))'
+tt list --json | jq '.tasks | map(select(.status == "in-progress"))'
 ```
 
 This enables more complex automation and integration with other tools. 

@@ -15,6 +15,7 @@ const chalk = require('chalk');
 
 // Constants
 const TEST_DIR = path.join(__dirname);
+const TT_BIN = path.join(__dirname, '..', 'bin', 'tt');
 const TASKTRACKER_BIN = path.join(__dirname, '..', 'bin', 'tasktracker');
 
 // Results tracking
@@ -88,9 +89,24 @@ const assert = {
 
 // Test command
 const runCommand = (command, args = [], options = {}) => {
-  const cmd = command === 'tasktracker' ? TASKTRACKER_BIN : command;
+  if (!options.cwd) {
+    options.cwd = process.cwd();
+  }
+  
+  // Default to using tt if available, fallback to tasktracker
+  const preferredBin = fs.existsSync(TT_BIN) ? TT_BIN : TASKTRACKER_BIN;
+  const cmd = command === 'tasktracker' || command === 'tt' ? preferredBin : command;
+  
+  // Set TASKTRACKER_DATA_DIR to the cwd provided in options, or if missing, use process.cwd()
+  const env = { ...process.env };
+  
+  if (!env.TASKTRACKER_DATA_DIR) {
+    env.TASKTRACKER_DATA_DIR = path.join(options.cwd, '.tasktracker');
+  }
+  
   const result = spawnSync(cmd, args, {
     encoding: 'utf8',
+    env,
     ...options
   });
   
@@ -153,8 +169,8 @@ const runTestFile = (filePath) => {
 // Discover and run tests
 const runTests = (specificFile = null) => {
   // Check if TaskTracker bin exists
-  if (!fs.existsSync(TASKTRACKER_BIN)) {
-    console.error(chalk.red(`Error: TaskTracker binary not found at ${TASKTRACKER_BIN}`));
+  if (!fs.existsSync(TT_BIN) && !fs.existsSync(TASKTRACKER_BIN)) {
+    console.error(chalk.red(`Error: TaskTracker binary not found at ${TT_BIN} or ${TASKTRACKER_BIN}`));
     process.exit(1);
   }
   

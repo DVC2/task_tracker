@@ -1,0 +1,90 @@
+{
+  "commands": [
+    {
+      "name": "task.get_tasks",
+      "command": "tt list --minimal",
+      "description": "Get all tasks"
+    },
+    {
+      "name": "task.view_task",
+      "command": "tt view $1",
+      "description": "View a specific task by ID",
+      "args": ["task_id"]
+    },
+    {
+      "name": "task.add_quick",
+      "command": "tt quick \"$1\" $2",
+      "description": "Add a quick task with title and category",
+      "args": ["title", "category"]
+    },
+    {
+      "name": "task.status_todo",
+      "command": "tt update $1 status todo",
+      "description": "Set task status to todo",
+      "args": ["task_id"]
+    },
+    {
+      "name": "task.status_in_progress",
+      "command": "tt update $1 status in-progress",
+      "description": "Set task status to in-progress",
+      "args": ["task_id"]
+    },
+    {
+      "name": "task.status_review",
+      "command": "tt update $1 status review",
+      "description": "Set task status to review",
+      "args": ["task_id"]
+    },
+    {
+      "name": "task.status_done",
+      "command": "tt update $1 status done",
+      "description": "Set task status to done",
+      "args": ["task_id"]
+    },
+    {
+      "name": "task.comment",
+      "command": "tt update $1 comment \"$2\"",
+      "description": "Add a comment to a task",
+      "args": ["task_id", "comment"]
+    },
+    {
+      "name": "task.add_file",
+      "command": "tt update $1 add-file $CURSOR_FILE",
+      "description": "Link current file to a task",
+      "args": ["task_id"]
+    },
+    {
+      "name": "task.remove_file",
+      "command": "tt update $1 remove-file $CURSOR_FILE",
+      "description": "Remove current file from a task",
+      "args": ["task_id"]
+    },
+    {
+      "name": "task.track_changes",
+      "command": "tt changes",
+      "description": "Track file changes"
+    },
+    {
+      "name": "task.stats",
+      "command": "tt stats",
+      "description": "Show task statistics"
+    },
+    {
+      "name": "task.ai_context",
+      "command": "tt ai-context $1",
+      "description": "Generate AI-friendly context",
+      "args": ["task_id?"]
+    },
+    {
+      "name": "task.report",
+      "command": "tt report $1",
+      "description": "Generate a report in specified format",
+      "args": ["format?"]
+    },
+    {
+      "name": "task.snapshot",
+      "command": "tt snapshot",
+      "description": "Take a snapshot of current tasks"
+    }
+  ]
+} 

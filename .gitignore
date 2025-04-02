@@ -15,7 +15,7 @@
 !.tasktracker/reports/.gitkeep
 !.tasktracker/stats/.gitkeep
 # Don't exclude example files
-!examples/tasktracker-data/
+!docs/dev-docs/tasktracker-data/
 
 # Dependencies
 node_modules/
@@ -91,4 +91,7 @@ logs/
 
 # Custom exclusions
 snapshots/
-user-settings/ 
+user-settings/
+
+# Personal settings
+.taskrc 

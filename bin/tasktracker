@@ -11,39 +11,85 @@
 
 const fs = require('fs');
 const path = require('path');
-const { spawnSync, execSync } = require('child_process');
+const { spawnSync } = require('child_process');
+
+/**
+ * Loading animation module
+ * Shows a spinner animation for operations that take time
+ */
+class LoadingSpinner {
+  constructor() {
+    this.frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    this.interval = null;
+    this.message = '';
+    this.frameIndex = 0;
+  }
+
+  start(message = 'Loading...') {
+    this.message = message;
+    this.frameIndex = 0;
+    
+    // Don't start animation in non-interactive mode
+    if (!process.stdout.isTTY) return;
+    
+    clearInterval(this.interval);
+    process.stdout.write(`${this.frames[0]} ${this.message}`);
+    
+    this.interval = setInterval(() => {
+      this.frameIndex = (this.frameIndex + 1) % this.frames.length;
+      process.stdout.clearLine(0);
+      process.stdout.cursorTo(0);
+      process.stdout.write(`${this.frames[this.frameIndex]} ${this.message}`);
+    }, 80);
+  }
+
+  stop(finalMessage = '') {
+    if (!process.stdout.isTTY) {
+      if (finalMessage) console.log(finalMessage);
+      return;
+    }
+    
+    clearInterval(this.interval);
+    process.stdout.clearLine(0);
+    process.stdout.cursorTo(0);
+    if (finalMessage) console.log(finalMessage);
+  }
+}
+
+// Create a spinner instance
+const spinner = new LoadingSpinner();
 
 // Find the application root directory
 const appRoot = path.resolve(__dirname, '..');
 const libDir = path.join(appRoot, 'lib');
 const coreDir = path.join(libDir, 'core');
-const reportingDir = path.join(libDir, 'reporting');
-const integrationDir = path.join(libDir, 'integration');
+const commandsDir = path.join(libDir, 'commands');
 
-// Try to load modules from reorganized directories first, then fallback to old structure
-function requireWithFallback(modulePath, fallbackPath) {
-  try {
-    return require(modulePath);
-  } catch (err) {
-    if (err.code === 'MODULE_NOT_FOUND') {
-      try {
-        return require(fallbackPath);
-      } catch (fallbackErr) {
-        console.error(`❌ ${path.basename(fallbackPath)} not found!`);
-        throw fallbackErr;
-      }
-    }
-    throw err;
-  }
+// Import core modules
+let commandRegistry, help, parseArgs, output;
+
+try {
+  // Import the new modular components
+  commandRegistry = require('../lib/commands/index');
+  help = require('../lib/commands/help');
+  const cliParser = require('../lib/core/cli-parser');
+  parseArgs = cliParser.parseArgs;
+  const formatting = require('../lib/core/formatting');
+  output = formatting.output;
+  
+  // Initialize all command paths
+  commandRegistry.initCommandPaths(appRoot);
+} catch (error) {
+  console.error('❌ Error loading modular components:', error.message);
+  console.error('This may indicate a corrupted installation or a version mismatch.');
+  console.error('Try running: node bin/tt-verify --fix');
+  process.exit(1);
 }
 
 // Initialize performance monitoring if available
 let perfMonitor;
 try {
-  perfMonitor = requireWithFallback(
-    path.join(coreDir, 'perf-monitor.js'),
-    path.join(libDir, 'perf-monitor.js')
-  );
+  perfMonitor = require('../lib/core/perf-monitor');
   perfMonitor.init({
     enabled: process.env.TASKTRACKER_PERF_MONITOR !== 'false',
     logToConsole: process.env.TASKTRACKER_PERF_LOG === 'true'
@@ -52,96 +98,10 @@ try {
   // Continue without performance monitoring
 }
 
-// Try to load file cache if available
-let fileCache;
-try {
-  fileCache = requireWithFallback(
-    path.join(coreDir, 'file-cache.js'),
-    path.join(libDir, 'file-cache.js')
-  );
-} catch (error) {
-  // Continue without file caching
-}
-
-// Available commands and their scripts
-const COMMANDS = {
-  // Core task management
-  'init': { script: 'tasktracker.js', description: 'Initialize TaskTracker in the current directory' },
-  'add': { script: 'tasktracker.js', description: 'Add a new task (interactive)' },
-  'quick': { script: 'quick-task.js', description: 'Quickly add a task (non-interactive)' },
-  'update': { script: 'tasktracker.js', description: 'Update an existing task' },
-  'list': { script: 'tasktracker.js', description: 'List all tasks' },
-  'view': { script: 'tasktracker.js', description: 'View details of a specific task' },
-  'changes': { script: 'tasktracker.js', command: 'changes', description: 'Track file changes' },
-  'files': { script: 'tasktracker.js', command: 'changes', description: 'Alias for changes - track file changes' },
-  'status': { script: 'tasktracker.js', command: 'list', description: 'Alias for list - show task status' },
-  'release': { script: 'tasktracker.js', description: 'Create a new release' },
-  'ai-context': { script: 'tasktracker.js', description: 'Generate AI-friendly context from tasks' },
-  'context': { script: 'tasktracker.js', command: 'ai-context', description: 'Alias for ai-context' },
-  'code-health': { script: 'tasktracker.js', description: 'Analyze code health metrics for technical debt' },
-  'health': { script: 'tasktracker.js', command: 'code-health', description: 'Alias for code-health' },
-  'verify': { script: 'tasktracker.js', description: 'Verify TaskTracker installation and configuration' },
-  'update-config': { script: 'tasktracker.js', description: 'Update configuration settings' },
-  'ignore': { script: 'tasktracker.js', description: 'Manage ignore patterns (.taskignore)' },
-  'archive': { script: 'tasktracker.js', description: 'Archive a task (move to archives)' },
-  'restore': { script: 'tasktracker.js', description: 'Restore a task from archives' },
-  'archives': { script: 'tasktracker.js', description: 'List all archived tasks' },
-  'commit': { script: 'task-commit.js', description: 'Create a Git commit linked to a task' },
-  'context-export': { script: 'task-context.js', description: 'Export task context for PR descriptions or sharing' },
-  'journal': { script: 'task-journal.js', description: 'Track work sessions on tasks' },
-  'performance': { script: 'perf-monitor.js', description: 'View performance metrics and diagnostics' },
-  
-  // Statistics and reporting
-  'snapshot': { script: 'stats-tracker.js', description: 'Take a snapshot of the current project state' },
-  'report': { script: 'stats-tracker.js', description: 'Generate a report (text, html, json)' },
-  'compare': { script: 'stats-tracker.js', description: 'Compare with a previous snapshot' },
-  'trends': { script: 'stats-tracker.js', description: 'Show task completion trends' },
-  'stats': { script: 'stats-tracker.js', command: 'snapshot', description: 'Alias for snapshot - take project snapshot' },
-  
-  // Setup and utilities
-  'setup': { script: 'install.js', description: 'Set up TaskTracker in a project' },
-  'automate': { script: 'auto-tracker.sh', description: 'Set up Git hooks and automation', shell: true },
-  'onboard': { script: 'tasktracker.js', description: 'Interactive onboarding process for new users' },
-  'help': { description: 'Show help information' },
-  '--help': { alias: 'help', description: 'Show help information' },
-  '-h': { alias: 'help', description: 'Show help information' }
-};
-
 // Process command line arguments
 const args = process.argv.slice(2);
-const command = args[0];
-let commandArgs = args.slice(1);
-
-// Global options that can be used with any command
-const globalOptions = {
-  silent: false,
-  json: false,
-  nonInteractive: false
-};
-
-// Parse global options before passing them to commands
-function parseGlobalOptions() {
-  const filteredArgs = [];
-  
-  for (let i = 0; i < commandArgs.length; i++) {
-    const arg = commandArgs[i];
-    
-    if (arg === '--silent' || arg === '-s') {
-      globalOptions.silent = true;
-    } else if (arg === '--json' || arg === '-j') {
-      globalOptions.json = true;
-    } else if (arg === '--non-interactive' || arg === '--ni') {
-      globalOptions.nonInteractive = true;
-    } else {
-      filteredArgs.push(arg);
-    }
-  }
-  
-  return filteredArgs;
-}
-
-// Process global options
-const filteredCommandArgs = parseGlobalOptions();
+const command = args.length > 0 ? args[0] : null;
+const { commandArgs, options: globalOptions } = parseArgs(args.slice(1));
 
 // Start command execution timing
 let commandTimer;
@@ -150,29 +110,22 @@ if (perfMonitor) {
 }
 
 // Show help if no command is provided
-if (!command || COMMANDS[command]?.alias === 'help') {
-  showHelp();
-  if (perfMonitor) {
-    commandTimer();
-    perfMonitor.shutdown();
-  }
+if (!command) {
+  help.showHelp(null, globalOptions);
   process.exit(0);
 }
 
 // Special case for help command directly
 if (command === 'help' || command === '-h' || command === '--help') {
-  showHelp();
-  if (perfMonitor) {
-    commandTimer();
-    perfMonitor.shutdown();
-  }
+  const helpTopic = command === 'help' ? commandArgs[0] : null;
+  help.showHelp(helpTopic, globalOptions);
   process.exit(0);
 }
 
 // Special case for performance command
 if (command === 'performance') {
   if (!perfMonitor) {
-    console.error('❌ Performance monitoring not available. Make sure lib/perf-monitor.js exists.');
+    console.error('❌ Performance monitoring not available. Make sure lib/core/perf-monitor.js exists.');
     process.exit(1);
   }
   
@@ -214,265 +167,64 @@ if (command === 'performance') {
   process.exit(0);
 }
 
-// Special case for quick task (pass all arguments)
-if (command === 'quick') {
-  const quickTaskPath = path.join(coreDir, 'quick-task.js');
-  const fallbackPath = path.join(libDir, 'quick-task.js');
-  
-  let scriptPath;
-  if (fs.existsSync(quickTaskPath)) {
-    scriptPath = quickTaskPath;
-  } else if (fs.existsSync(fallbackPath)) {
-    scriptPath = fallbackPath;
-  } else {
-    console.error('❌ quick-task.js not found!');
-    if (perfMonitor) perfMonitor.shutdown();
+// Get the command handler
+const commandHandler = commandRegistry.getCommand(command);
+
+if (commandHandler) {
+  try {
+    // Execute the command
+    const result = commandHandler(...commandArgs, globalOptions);
+    
+    // Handle promises if the command returns one
+    if (result instanceof Promise) {
+      result
+        .then(res => {
+          cleanup();
+          if (res && !res.success) {
+            process.exit(1);
+          }
+          process.exit(0);
+        })
+        .catch(err => {
+          output(`❌ Command failed: ${err.message}`, 'error', { globalOptions });
+          cleanup();
+          process.exit(1);
+        });
+    } else {
+      // Handle synchronous result
+      cleanup();
+      if (result && !result.success) {
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+  } catch (error) {
+    output(`❌ Error executing command: ${error.message}`, 'error', { globalOptions });
+    cleanup();
     process.exit(1);
   }
-  
-  // Add global options as arguments
-  const globalFlags = [];
-  if (globalOptions.silent) globalFlags.push('--silent');
-  if (globalOptions.json) globalFlags.push('--json');
-  if (globalOptions.nonInteractive) globalFlags.push('--non-interactive');
-  
-  // Track performance
-  if (perfMonitor) {
-    perfMonitor.incrementCounter('quick_task_calls');
-  }
-  
-  const result = spawnSync('node', [scriptPath, ...commandArgs, ...globalFlags], { stdio: 'inherit' });
-  
-  // Cleanup and exit
-  if (commandTimer) commandTimer();
-  if (perfMonitor) perfMonitor.shutdown();
-  if (fileCache) fileCache.clearCache();
-  
-  process.exit(result.status);
-}
-
-// Execute the appropriate script for the command
-if (COMMANDS[command]) {
-  const cmd = COMMANDS[command];
-  
-  // Handle alias commands
-  if (cmd.alias) {
-    // If this is an alias, use the aliased command
-    const aliasedCmd = COMMANDS[cmd.alias];
-    if (aliasedCmd) {
-      // Execute the aliased command
-      const result = spawnSync(process.argv[0], [process.argv[1], cmd.alias, ...commandArgs], { stdio: 'inherit' });
-      
-      // Cleanup and exit
-      if (commandTimer) commandTimer();
-      if (perfMonitor) perfMonitor.shutdown();
-      if (fileCache) fileCache.clearCache();
-      
-      process.exit(result.status);
-    }
-  } else if (cmd.shell) {
-    // Execute shell command
-    const scriptPath = path.join(libDir, cmd.script);
-    const integrationScriptPath = path.join(integrationDir, cmd.script);
-    
-    let execPath;
-    if (fs.existsSync(scriptPath)) {
-      execPath = scriptPath;
-    } else if (fs.existsSync(integrationScriptPath)) {
-      execPath = integrationScriptPath;
-    } else {
-      console.error(`❌ ${cmd.script} not found!`);
-      if (perfMonitor) perfMonitor.shutdown();
-      process.exit(1);
-    }
-    
-    try {
-      if (perfMonitor) {
-        perfMonitor.incrementCounter('shell_command_calls');
-      }
-      
-      execSync(`bash ${execPath} ${commandArgs.join(' ')}`, { stdio: 'inherit' });
-      
-      // Cleanup and exit
-      if (commandTimer) commandTimer();
-      if (perfMonitor) perfMonitor.shutdown();
-      if (fileCache) fileCache.clearCache();
-      
-      process.exit(0);
-    } catch (error) {
-      if (perfMonitor) perfMonitor.shutdown();
-      if (fileCache) fileCache.clearCache();
-      process.exit(1);
-    }
-  } else {
-    // Execute Node.js script
-    // Look for script in reorganized directories first, then fallback to lib/
-    const scriptBaseName = cmd.script;
-    const originalScriptPath = path.join(libDir, scriptBaseName);
-    
-    // Define potential paths in the reorganized structure
-    const potentialPaths = [
-      path.join(coreDir, scriptBaseName),            // Core functionality
-      path.join(reportingDir, scriptBaseName),       // Reporting functionality
-      path.join(integrationDir, scriptBaseName),     // Integration functionality
-      originalScriptPath                             // Original location (fallback)
-    ];
-    
-    // Find the first path that exists
-    let scriptPath = null;
-    for (const p of potentialPaths) {
-      if (fs.existsSync(p)) {
-        scriptPath = p;
-        break;
-      }
-    }
-    
-    if (scriptPath) {
-      // For commands that use the original scripts, translate the command
-      let scriptCommand = cmd.command || command;
-      if (scriptBaseName === 'tasktracker.js' && command !== 'init') {
-        // Use the command as-is for tasktracker.js
-      } else if (scriptBaseName === 'stats-tracker.js') {
-        // For stats commands, the command becomes the first argument
-        filteredCommandArgs.unshift(scriptCommand);
-        scriptCommand = '';
-      }
-      
-      // Add global options as arguments
-      const globalFlags = [];
-      if (globalOptions.silent) globalFlags.push('--silent');
-      if (globalOptions.json) globalFlags.push('--json');
-      if (globalOptions.nonInteractive) globalFlags.push('--non-interactive');
-      
-      if (perfMonitor) {
-        perfMonitor.incrementCounter('script_calls');
-        perfMonitor.recordHistogram('args_count', filteredCommandArgs.length);
-      }
-      
-      const cmdArgs = [scriptPath, scriptCommand, ...globalFlags, ...filteredCommandArgs].filter(Boolean);
-      const result = spawnSync('node', cmdArgs, { stdio: 'inherit' });
-      
-      // Cleanup and exit
-      if (commandTimer) commandTimer();
-      if (perfMonitor) perfMonitor.shutdown();
-      if (fileCache) fileCache.clearCache();
-      
-      process.exit(result.status);
-    } else {
-      console.error(`❌ ${scriptBaseName} not found!`);
-      if (perfMonitor) perfMonitor.shutdown();
-      process.exit(1);
-    }
-  }
 } else {
-  console.error(`❌ Unknown command: ${command}`);
-  showHelp();
-  if (perfMonitor) perfMonitor.shutdown();
+  output(`❌ Unknown command: ${command}`, 'error', { globalOptions });
+  help.showHelp(null, globalOptions);
+  cleanup();
   process.exit(1);
 }
 
-// Display help information
-function showHelp() {
-  const logo = `
-╔════════════════════════════════════════╗
-║   _____         _    _____             ║
-║  |_   _|_ _ ___| | _|_   _| __ __ _    ║
-║    | |/ _\` / __| |/ / | || '__/ _\` |   ║
-║    | | (_| \\__ \\   <  | || | | (_| |   ║
-║    |_|\\__,_|___/_|\\_\\ |_||_|  \\__,_|   ║
-║                                        ║
-╚════════════════════════════════════════╝`;
+// Cleanup function for process exit
+function cleanup() {
+  if (commandTimer) commandTimer();
+  if (perfMonitor) perfMonitor.shutdown();
+  spinner.stop();
+}
 
-  console.log(logo);
-  console.log('\nUsage: tasktracker <command> [options]');
-  
-  console.log('\nGlobal Options:');
-  console.log('  --json, -j               Output results in JSON format');
-  console.log('  --silent, -s             Suppress normal console output');
-  console.log('  --non-interactive, --ni  Never prompt for input (for automated environments)');
-  
-  console.log('\nTask Management:');
-  console.log('  init                     Initialize TaskTracker in the current directory');
-  console.log('  add                      Add a new task (interactive)');
-  console.log('  quick "Task" [cat]       Quickly add a task (non-interactive)');
-  console.log('  update <id> <field> <value>  Update an existing task');
-  console.log('    Fields: status, category, priority, effort, title, desc, add-file, comment');
-  console.log('    Example: update 1 status done');
-  console.log('    Example: update 2 add-file src/main.js    (link file to task)');
-  console.log('  list [status]            List all tasks or filter by status');
-  console.log('  status                   Alias for list - show task status');
-  console.log('  view <id>                View details of a specific task');
-  console.log('  archive <id> [reason]    Archive a task (move to archives)');
-  console.log('  restore <id>             Restore a task from archives');
-  console.log('  archives                 List all archived tasks');
-  console.log('  changes [path]           Track file changes (works without Git)');
-  console.log('  files [path]             Alias for changes - track file changes');
-  console.log('  release [version]        Create a new release');
-  console.log('  ai-context [id]          Generate AI-friendly context from tasks');
-  console.log('  context [id]             Alias for ai-context');
-  console.log('  code-health [path]       Analyze code health metrics for technical debt');
-  console.log('  health [path]            Alias for code-health');
-  console.log('  commit <id> [message]    Create a Git commit linked to a task');
-  console.log('  context-export <id>      Export task context for PR descriptions or sharing');
-  console.log('  journal [session]         Track work sessions on tasks');
-  console.log('    journal start <id>       Start a work session on a task');
-  console.log('    journal end [notes]      End the current work session');
-  console.log('    journal show             Show recent work sessions');
-  console.log('    journal summary          Show time summary across tasks');
-  console.log('  performance              View performance metrics and diagnostics');
-  
-  console.log('\nStatistics and Reporting:');
-  console.log('  snapshot                 Take a snapshot of the current project state');
-  console.log('  stats                    Alias for snapshot - take project snapshot');
-  console.log('  report [type]            Generate a report (text, html, json)');
-  console.log('  compare [days]           Compare with a snapshot from N days ago');
-  console.log('  trends                   Show task completion trends');
-  
-  console.log('\nSetup and Utilities:');
-  console.log('  setup                    Set up TaskTracker in a project');
-  console.log('  automate                 Configure Git hooks and automation (optional)');
-  console.log('  onboard                  Interactive onboarding process for new users');
-  console.log('  verify                   Verify TaskTracker installation and configuration');
-  console.log('  ignore <action> [pattern] Manage ignore patterns (.taskignore)');
-  console.log('    - init                  Create a default .taskignore file');
-  console.log('    - list                  List all ignore patterns');
-  console.log('    - add <pattern>         Add a new pattern to ignore');
-  console.log('    - remove <pattern>      Remove an ignore pattern');
-  console.log('  update-config <option>   Update configuration settings');
-  console.log('    - suppress-chalk-warnings  Hide chalk library warnings');
-  console.log('    - show-chalk-warnings      Show chalk library warnings');
-  console.log('  help, -h, --help         Show this help information');
-  
-  console.log('\nAutomation Usage Example:');
-  console.log('  tasktracker list --json          Output task list as JSON for automated processing');
-  console.log('  tasktracker quick "Task" --ni    Add a task in non-interactive mode (CI/CD)');
-  console.log('  tasktracker update 5 status done --silent  Update task silently (no output)');
-  
-  console.log('\nCommand Details:');
-  console.log('  • update - Update task properties:');
-  console.log('    - status: Change task status (todo, in-progress, review, done)');
-  console.log('    - category: Change category (feature, bugfix, technical-debt, etc.)');
-  console.log('    - priority: Set priority (p0-critical, p1-high, p2-medium, p3-low)');
-  console.log('    - effort: Set effort (1-trivial, 3-medium, 5-large, etc.)');
-  console.log('    - add-file: Link a file to the task');
-  console.log('    - comment: Add a comment to the task');
-  
-  console.log('  • changes/files - Tracks file changes with or without Git');
-  console.log('    - Uses Git if available or falls back to file timestamp tracking');
-  console.log('    - Helps identify which tasks are affected by your changes');
-  
-  console.log('  • ai-context/context - Creates context for AI assistants:');
-  console.log('    - Generates a summary of tasks for AI tools like GitHub Copilot or Claude');
-  console.log('    - Helps AI understand your project structure and current work');
-  
-  console.log('\nExamples:');
-  console.log('  tasktracker init');
-  console.log('  tasktracker quick "Fix login button" bugfix');
-  console.log('  tasktracker list todo');
-  console.log('  tasktracker update 3 add-file src/components/Login.js');
-  console.log('  tasktracker changes');
-  console.log('  tasktracker files src');
-  console.log('  tasktracker report html');
-  
-  console.log('\nFor more details, see the documentation in the docs/ directory.');
-} 
+// Register cleanup handlers
+process.on('exit', cleanup);
+process.on('SIGINT', () => {
+  cleanup();
+  process.exit(1);
+});
+
+// Add the spinner to the module exports
+module.exports = {
+  spinner
+}; 

@@ -1,6 +1,115 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [2.0.0] - 2023-08-15
+
+### Major Changes
+- Complete architectural refactoring to modular design
+- Introduced command registry pattern for better extensibility
+- Removed monolithic script in favor of dedicated modules
+- Improved performance and reduced memory usage
+
+### Added
+- New core service modules for better separation of concerns
+- Comprehensive test suite with unit, integration, and performance tests
+- Command aliasing system with consistent interface
+- Performance monitoring and optimization framework
+- Documentation for architectural patterns and extension points
+
+### Changed
+- All commands have been extracted to individual modules
+- Entry point scripts now use command registry for dispatch
+- Improved error handling across all commands
+- Better terminal output formatting with consistent styles
+- Configuration system is now more modular and extensible
+
+### Fixed
+- Many edge cases and error conditions are now properly handled
+- Improved compatibility with various terminal environments
+- Better handling of corrupted or missing data files
+- Command validation is now more robust
+
+### Documentation
+- Added architecture documentation for developers
+- Updated README with new features and usage patterns
+- Added optimization documentation with performance metrics
+- Improved inline code documentation
+
+## [1.5.0] - 2023-05-20
+
+### Added
+- New `ignore` command for managing ignored files
+- Support for custom task views and layouts
+- Improved Git integration 
+- Added release management commands
+
+### Changed
+- Enhanced task filtering system
+- Improved performance for large task collections
+- Better terminal compatibility
+
+### Fixed
+- Issue with archiving tasks containing special characters
+- Bug in file change detection with certain Git configurations
+- Problems with configuration saving in some environments
+
+## [1.4.2] - 2023-04-15
+
+### Fixed
+- Critical bug in task update command
+- Issue with multi-line task descriptions
+- Path handling on Windows systems
+
+## [1.4.1] - 2023-04-10
+
+### Fixed
+- Bug in file tracking when files contained spaces
+- Configuration loading issue on first run
+- Task list sorting inconsistencies
+
+## [1.4.0] - 2023-04-01
+
+### Added
+- Task archiving and restoration
+- File tracking improvements
+- Stats command for project metrics
+- Support for custom categories
+
+### Changed
+- Better terminal output formatting
+- Improved task filtering options
+- Enhanced help documentation
+
+## [1.3.0] - 2023-03-15
+
+### Added
+- Support for task comments
+- File linking to tasks
+- Basic search functionality
+- JSON output option for automation
+
+### Fixed
+- Various bugs and edge cases
+
+## [1.2.0] - 2023-02-22
+
+### Added
+- Configuration management
+- Custom task statuses
+- Priority levels for tasks
+
+## [1.1.0] - 2023-02-10
+
+### Added
+- Task updating functionality
+- Improved listing with filtering
+- Basic file change tracking
+
+## [1.0.0] - 2023-02-01
+
+### Added
+- Initial release of TaskTracker
+- Basic task creation and listing
+- Simple CLI interface
 
 ## [2.1.2] - 2024-03-31
 
@@ -63,25 +172,6 @@ All notable changes to this project will be documented in this file.
 - Terminal compatibility issues in various environments
 - Performance bottlenecks when dealing with large task sets
 - Issues with task dependency visualization
-
-## [2.0.0] - 2023-05-01
-
-### Added
-- Task dependency tracking between tasks
-- Custom fields support for specialized tracking
-- Enhanced search and filtering capabilities
-- Cost optimization for AI assistant integration
-- Batch processing to reduce premium tool call costs
-- Improved terminal compatibility with better formatting fallbacks
-
-### Changed
-- Updated filtering system to handle priority, category, and keyword filters
-- Improved task relationship visualization
-- Enhanced batch operations interface
-
-### Fixed
-- Formatting issues in various terminal environments
-- Performance issues with large task sets
 
 ## [1.5.0] - 2023-03-15
 

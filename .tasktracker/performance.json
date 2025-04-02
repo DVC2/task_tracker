@@ -1,5 +1,5 @@
 {
-  "timestamp": 1743362742272,
+  "timestamp": 1743621206213,
   "system": {
     "platform": "darwin",
     "arch": "arm64",
@@ -7,8 +7,42 @@
     "cpus": 14,
     "totalMemory": 24576
   },
-  "timers": {},
-  "counters": {},
-  "histograms": {},
+  "timers": {
+    "command_list": {
+      "count": 1,
+      "total": 52.993708,
+      "min": 52.993708,
+      "max": 52.993708,
+      "avg": 52.993708,
+      "samples": [
+        {
+          "timestamp": 1743621206213,
+          "duration": 52.993708
+        }
+      ]
+    }
+  },
+  "counters": {
+    "script_calls": {
+      "value": 1,
+      "history": [
+        {
+          "timestamp": 1743621206160,
+          "value": 1
+        }
+      ]
+    }
+  },
+  "histograms": {
+    "args_count": {
+      "count": 1,
+      "sum": 0,
+      "min": 0,
+      "max": 0,
+      "bins": {
+        "0": 1
+      }
+    }
+  },
   "resourceUsage": []
 }

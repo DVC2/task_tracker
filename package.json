@@ -1,20 +1,20 @@
 {
   "name": "tasktracker-cli",
   "version": "2.1.2",
-  "description": "A lightweight task management system for developers that helps track technical debt",
-  "main": "bin/tasktracker",
+  "description": "A lightweight task management CLI for developers to track project tasks and technical debt from the command line",
+  "main": "bin/tt",
   "bin": {
     "tasktracker": "./bin/tasktracker",
-    "tt": "./bin/tasktracker"
+    "tt": "./bin/tt"
   },
   "preferGlobal": true,
   "scripts": {
-    "start": "node ./bin/tasktracker",
-    "init": "node ./bin/tasktracker init",
+    "start": "node ./bin/tt",
+    "init": "node ./bin/tt init",
     "test": "node tests/test-runner.js",
     "test:core": "node tests/test-runner.js tests/test-core-commands.js",
-    "install": "node install.js",
-    "postinstall": "node install.js"
+    "install": "node install.js --auto",
+    "postinstall": "node install.js --auto"
   },
   "repository": {
     "type": "git",
@@ -43,13 +43,14 @@
     "chalk": "^4.1.2",
     "commander": "^9.4.1",
     "fs-extra": "^10.1.0",
-    "inquirer": "^8.2.5"
+    "readline-sync": "^1.4.10"
   },
   "devDependencies": {
     "eslint": "^8.29.0",
     "jest": "^29.3.1",
     "mocha": "^11.1.0",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "sinon": "^20.0.0"
   },
   "engines": {
     "node": ">=12.0.0"

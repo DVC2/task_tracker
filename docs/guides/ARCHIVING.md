@@ -1,100 +1,98 @@
 # Task Archiving Guide
 
-TaskTracker includes a powerful archiving system that allows you to maintain a clean task list while preserving historical task information. This guide explains how to use the archive functionality effectively.
+TaskTracker includes a comprehensive archiving system to help you manage completed or deferred tasks without cluttering your active task list.
 
-## Archiving Overview
+## Table of Contents
 
-The archive system:
-- Moves completed or obsolete tasks to a separate storage file
-- Preserves all task data, including comments, related files, and timestamps
-- Allows tasks to be restored if needed
-- Keeps your active task list focused on current work
+1. [Archiving Tasks](#archiving-tasks)
+2. [Viewing Archived Tasks](#viewing-archived-tasks)
+3. [Restoring Tasks](#restoring-tasks)
+4. [Advanced Usage](#advanced-usage)
+   - [Batch Archiving](#batch-archiving)
+   - [Export/Import](#exportimport)
+   - [Reporting](#reporting)
 
-## Basic Commands
+## Archiving Tasks
 
-### Archiving a Task
-
-To archive a task, use the following command with the task ID and an optional reason:
-
-```bash
-# Basic syntax
-node lib/tasktracker.js archive <task-id> [reason]
-
-# Example
-node lib/tasktracker.js archive 42 "Feature deferred to next release"
-```
-
-The reason helps document why the task was archived and is visible when viewing archived tasks.
-
-### Listing Archived Tasks
-
-To view all archived tasks:
+When a task is completed, deferred, or otherwise no longer relevant to your current work, you can archive it using the `archive` command:
 
 ```bash
-node lib/tasktracker.js archives
+tt archive <task-id> [reason]
 ```
 
-This will display a formatted table showing all archived tasks with their status, category, and archive date.
+Example:
+```bash
+tt archive 42 "Feature deferred to next release"
+```
 
-### Restoring a Task
+This moves the task from your active task list to the archives, adding metadata about when it was archived and why.
 
-If you need to bring a task back from the archives:
+## Viewing Archived Tasks
+
+To view all archived tasks, use the `archives` command:
 
 ```bash
-node lib/tasktracker.js restore <task-id>
-
-# Example
-node lib/tasktracker.js restore 42
+tt archives
 ```
 
-This will move the task back to the active task list, removing the archive metadata.
+This will display a formatted list of all archived tasks, including their IDs, titles, statuses, and when they were archived.
 
-## When to Archive Tasks
+## Restoring Tasks
 
-Good candidates for archiving include:
+If you need to bring a task back from the archives to your active task list, use the `restore` command:
 
-1. **Completed tasks** that are no longer relevant to current work
-2. **Obsolete tasks** that will not be implemented
-3. **Duplicate tasks** that were created by mistake
-4. **Deferred tasks** that won't be addressed in the current development cycle
+```bash
+tt restore <task-id>
+```
 
-Rather than deleting these tasks, archiving preserves the historical context and allows future reference.
+Example:
+```bash
+tt restore 42
+```
 
-## Storage and Implementation
+This will move the task back to your active task list and remove the archiving metadata.
 
-Archived tasks are stored in `.tasktracker/archives.json` in the same format as regular tasks but with additional archive metadata:
+## Advanced Usage
 
-```json
-{
-  "archived": {
-    "date": "2023-11-15T14:32:17.123Z",
-    "reason": "Feature completed and deployed to production"
-  }
-}
+### Batch Archiving
+
+You can archive multiple tasks at once using a filter with the `list` command and then piping to `xargs`:
+
+```bash
+# Archive all tasks with status 'done'
+tt list done --json | jq '.data.tasks[].id' | xargs -I {} tt archive {} "Sprint completed"
+```
+
+### Export/Import
+
+You can export archived tasks to JSON for backup or analysis:
+
+```bash
+tt archives --json > archived_sprint_45.json
+```
+
+### Reporting
+
+Generate a report of archived tasks for project documentation:
+
+```bash
+tt archives --json | tt-batch report generate-archive-summary
 ```
 
 ## Best Practices
 
-- Include meaningful reasons when archiving tasks
-- Review and archive completed tasks periodically to keep your task list manageable
-- Use batch archiving to archive multiple tasks at once:
+1. **Always provide a reason** when archiving tasks to maintain context for future reference
+2. **Regularly review archived tasks** to ensure nothing important is forgotten
+3. **Archive tasks by sprint or milestone** to keep historic context grouped together
+4. **Export archives periodically** for long-term project documentation
+
+## Automation
+
+You can set up automation to archive tasks automatically when they've been in a certain status for a period of time:
 
 ```bash
-# Create a batch file (archive_tasks.txt)
-echo "archive 101 Task completed in sprint 45" > archive_tasks.txt
-echo "archive 102 Duplicate of task 95" >> archive_tasks.txt
-echo "archive 103 Feature postponed" >> archive_tasks.txt
-
-# Execute batch archive
-./bin/tasktracker-batch archive_tasks.txt
-```
-
-- Consider archiving tasks during release cycles or at the end of sprints
-- Create archive reports to document completed work:
-
-```bash
-# Get JSON export of archived tasks for reporting
-node lib/tasktracker.js archives --json > archived_sprint_45.json
+# Example cron job to archive tasks marked as 'done' for more than 14 days
+0 0 * * * find ~/.tasktracker/ -name "*.json" | xargs grep -l '"status":"done"' | xargs -I {} tt archive {} "Auto-archived: Completed > 14 days ago"
 ```
 
 ## Integrating with Workflow
@@ -107,11 +105,11 @@ For teams using TaskTracker, consider these workflow integrations:
 
 ## Accessing Archived Tasks Programmatically
 
-The archive functionality includes JSON output mode for integrating with other tools:
+When building integrations or reports, you can access archived tasks in JSON format:
 
 ```bash
-# Get machine-readable output
-node lib/tasktracker.js archives --json
+# Get JSON export of archived tasks
+tt archives --json > archived_tasks.json
 ```
 
-This can be used to generate reports or integrate with other tools in your workflow. 
+This produces a JSON array of archived tasks that you can process with other tools. 

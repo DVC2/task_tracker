@@ -1,0 +1,162 @@
+#!/usr/bin/env node
+
+/**
+ * TaskTracker - Command Line Interface
+ * 
+ * A lightweight task management system for developers.
+ * This script provides a single entry point to all TaskTracker functionality.
+ * 
+ * Usage: tt <command> [options]
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// Find the application root directory
+const appRoot = path.resolve(__dirname, '..');
+const libDir = path.join(appRoot, 'lib');
+const commandsDir = path.join(libDir, 'commands');
+const coreDir = path.join(libDir, 'core');
+
+// Import core modules
+const { parseArgs } = require('../lib/core/cli-parser');
+const { output } = require('../lib/core/formatting');
+const commandRegistry = require('../lib/commands/index');
+const help = require('../lib/commands/help');
+
+/**
+ * Loading animation module
+ * Shows a spinner animation for operations that take time
+ */
+class LoadingSpinner {
+  constructor() {
+    this.frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    this.interval = null;
+    this.message = '';
+    this.frameIndex = 0;
+  }
+
+  start(message = 'Loading...') {
+    this.message = message;
+    this.frameIndex = 0;
+    
+    // Don't start animation in non-interactive mode
+    if (!process.stdout.isTTY) return;
+    
+    clearInterval(this.interval);
+    process.stdout.write(`${this.frames[0]} ${this.message}`);
+    
+    this.interval = setInterval(() => {
+      this.frameIndex = (this.frameIndex + 1) % this.frames.length;
+      process.stdout.clearLine(0);
+      process.stdout.cursorTo(0);
+      process.stdout.write(`${this.frames[this.frameIndex]} ${this.message}`);
+    }, 80);
+  }
+
+  stop(finalMessage = '') {
+    if (!process.stdout.isTTY) {
+      if (finalMessage) console.log(finalMessage);
+      return;
+    }
+    
+    clearInterval(this.interval);
+    process.stdout.clearLine(0);
+    process.stdout.cursorTo(0);
+    if (finalMessage) console.log(finalMessage);
+  }
+}
+
+// Create a spinner instance
+const spinner = new LoadingSpinner();
+
+// Initialize performance monitoring if available
+let perfMonitor;
+try {
+  perfMonitor = require('../lib/core/perf-monitor');
+  perfMonitor.init({
+    enabled: process.env.TASKTRACKER_PERF_MONITOR !== 'false',
+    logToConsole: process.env.TASKTRACKER_PERF_LOG === 'true'
+  });
+} catch (error) {
+  // Continue without performance monitoring
+}
+
+// Initialize all command paths
+commandRegistry.initCommandPaths(appRoot);
+
+// Process command line arguments
+const args = process.argv.slice(2);
+const command = args.length > 0 ? args[0] : null;
+const { commandArgs, options: globalOptions } = parseArgs(args.slice(1));
+
+// Start command execution timing
+let commandTimer;
+if (perfMonitor) {
+  commandTimer = perfMonitor.startTimer(`command_${command || 'help'}`);
+}
+
+// Show help if no command is provided
+if (!command) {
+  help.showHelp(null, globalOptions);
+  process.exit(0);
+}
+
+// Special case for help command directly
+if (command === 'help') {
+  const helpTopic = commandArgs[0];
+  help.showHelp(helpTopic, globalOptions);
+  process.exit(0);
+}
+
+// Get the command handler
+const commandHandler = commandRegistry.getCommand(command);
+
+if (commandHandler) {
+  try {
+    // Execute the command
+    const result = commandHandler(...commandArgs, globalOptions);
+    
+    // Handle promises if the command returns one
+    if (result instanceof Promise) {
+      result
+        .then(res => {
+          if (res && !res.success) {
+            process.exit(1);
+          }
+          process.exit(0);
+        })
+        .catch(err => {
+          output(`❌ Command failed: ${err.message}`, 'error', { globalOptions });
+          process.exit(1);
+        });
+    } else {
+      // Handle synchronous result
+      if (result && !result.success) {
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+  } catch (error) {
+    output(`❌ Error executing command: ${error.message}`, 'error', { globalOptions });
+    process.exit(1);
+  }
+} else {
+  output(`❌ Unknown command: ${command}`, 'error', { globalOptions });
+  help.showHelp(null, globalOptions);
+  process.exit(1);
+}
+
+// Cleanup function for process exit
+function cleanup() {
+  if (commandTimer) commandTimer();
+  if (perfMonitor) perfMonitor.shutdown();
+  spinner.stop();
+}
+
+// Register cleanup handlers
+process.on('exit', cleanup);
+process.on('SIGINT', () => {
+  cleanup();
+  process.exit(1);
+});

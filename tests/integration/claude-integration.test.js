@@ -12,11 +12,11 @@ const assert = require('assert');
 const { describe, it, before, after } = require('mocha');
 
 // Path to the tasktracker CLI and batch processor
-const TASKTRACKER_CLI = path.resolve(__dirname, '../../bin/tasktracker');
-const TASKTRACKER_BATCH = path.resolve(__dirname, '../../bin/tasktracker-batch');
+const TT_BIN = path.resolve(__dirname, '../../bin/tt');
+const TT_BATCH = path.resolve(__dirname, '../../bin/tt-batch');
 
 // Path to Claude templates
-const CLAUDE_TEMPLATES_DIR = path.resolve(__dirname, '../../examples/claude-templates');
+const CLAUDE_TEMPLATES_DIR = path.resolve(__dirname, '../../docs/dev-docs/claude-templates');
 
 // Test task data
 const TEST_TASKS = {
@@ -27,7 +27,7 @@ const TEST_TASKS = {
 
 // Helper function to run tasktracker commands in test mode
 function runCommand(args) {
-  const command = `${TASKTRACKER_CLI} ${args} --test-mode --silent`;
+  const command = `${TT_BIN} ${args} --test-mode --silent`;
   try {
     return execSync(command, { encoding: 'utf8' });
   } catch (error) {
@@ -40,7 +40,7 @@ function runCommand(args) {
 
 // Helper function to run batch commands
 function runBatch(batchFile) {
-  const command = `${TASKTRACKER_BATCH} ${batchFile} --test-mode`;
+  const command = `${TT_BATCH} ${batchFile} --test-mode`;
   try {
     return execSync(command, { encoding: 'utf8' });
   } catch (error) {

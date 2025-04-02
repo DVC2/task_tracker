@@ -1,135 +1,80 @@
-# TaskTracker Cursor Integration
-# This file enhances TaskTracker functionality within Cursor IDE
-
-# Get current tasktracker tasks
-task.get_tasks = tasktracker list --minimal
-
-# Get task details
-task.view_task = tasktracker view $1
-
-# Add quick task
-task.add_quick = tasktracker quick "$1" "${2:-feature}"
-
-# Change task status
-task.status_todo = tasktracker update $1 status todo
-task.status_in_progress = tasktracker update $1 status in-progress
-task.status_review = tasktracker update $1 status review
-task.status_done = tasktracker update $1 status done
-
-# Add comment to task
-task.comment = tasktracker update $1 comment "$2"
-
-# Add current file to task
-task.add_file = tasktracker update $1 addfile "${cursor.file}"
-
-# Track file changes and link to tasks
-task.track_changes = tasktracker changes
-
-# Show statistics
-task.stats = tasktracker snapshot
-
-# Generate task context for AI assistant
-task.context = tasktracker ai-context $1
-
-# Show burndown chart
-task.burndown = ./lib/burndown-chart.js --format=ascii
-
-# Run batch commands to save premium tool calls
-task.batch = ./bin/tasktracker-batch $1
-
-# Show dependencies
-task.deps = tasktracker list --json | jq '[.tasks[] | select(.dependencies != null or .blockedBy != null)]'
-
-# Create a PR description from task
-task.pr_desc = |
-  function generatePrDescription() {
-    const taskId = process.argv[2];
-    if (!taskId) {
-      console.log("Usage: task.pr_desc <task_id>");
-      return;
+{
+  "commands": [
+    {"name": "task.list", "command": "tt list", "description": "List all tasks"},
+    {"name": "task.list_todo", "command": "tt list todo", "description": "List only TO-DO tasks"},
+    {"name": "task.list_in_progress", "command": "tt list in-progress", "description": "List tasks in progress"},
+    {"name": "task.view", "command": "tt view %s", "description": "View details of a specific task by ID"},
+    {"name": "task.add", "command": "tt add", "description": "Add a new task interactively"},
+    {"name": "task.quick", "command": "tt quick \"%s\" %s", "description": "Quickly add a task with title and category"},
+    {"name": "task.update_status", "command": "tt update %s status %s", "description": "Update task status (task_id, new_status)"},
+    {"name": "task.add_file", "command": "tt update %s add-file %s", "description": "Link a file to a task (task_id, file_path)"},
+    {"name": "task.comment", "command": "tt update %s comment \"%s\"", "description": "Add a comment to a task (task_id, comment)"},
+    {"name": "task.changes", "command": "tt changes", "description": "Show recent file changes"},
+    {"name": "task.ai_context", "command": "tt ai-context", "description": "Generate AI-friendly context from tasks"},
+    {"name": "task.stats", "command": "tt stats", "description": "Show task statistics"}
+  ],
+  "rules": [
+    {
+      "description": "Create task related to file you're editing",
+      "match": {
+        "trigger": "create task",
+        "patterns": [
+          "create task",
+          "add task",
+          "new task"
+        ]
+      },
+      "actions": [
+        {
+          "type": "suggest_command",
+          "command": "task.quick",
+          "args": [
+            "$ASK:Task title?",
+            "$ASK:Category? (feature|bugfix|refactor|docs|chore)"
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Link current file to task",
+      "match": {
+        "trigger": "link task",
+        "patterns": [
+          "link (to|with) task",
+          "associate (with|to) task",
+          "connect to task"
+        ]
+      },
+      "actions": [
+        {
+          "type": "suggest_command",
+          "command": "task.add_file",
+          "args": [
+            "$ASK:Task ID?",
+            "$CURSOR_FILE"
+          ]
+        }
+      ]
+    },
+    {
+      "description": "View task details",
+      "match": {
+        "trigger": "view task",
+        "patterns": [
+          "show task",
+          "view task",
+          "task details"
+        ]
+      },
+      "actions": [
+        {
+          "type": "suggest_command",
+          "command": "task.view",
+          "args": [
+            "$ASK:Task ID?"
+          ]
+        }
+      ]
     }
-    
-    const { execSync } = require('child_process');
-    const result = execSync(`tasktracker view ${taskId} --json`).toString();
-    const task = JSON.parse(result);
-    
-    let description = `## Task #${task.id}: ${task.title}\n\n`;
-    
-    if (task.description) {
-      description += `${task.description}\n\n`;
-    }
-    
-    description += `**Category:** ${task.category}\n`;
-    
-    if (task.priority) {
-      description += `**Priority:** ${task.priority}\n`;
-    }
-    
-    if (task.relatedFiles && task.relatedFiles.length > 0) {
-      description += `\n### Files Changed\n`;
-      task.relatedFiles.forEach(file => {
-        description += `- \`${file}\`\n`;
-      });
-    }
-    
-    if (task.checklists && task.checklists.length > 0) {
-      description += `\n### Checklist\n`;
-      
-      task.checklists.forEach(checklist => {
-        description += `\n#### ${checklist.title}\n`;
-        
-        checklist.items.forEach(item => {
-          const checkbox = item.completed ? 'x' : ' ';
-          description += `- [${checkbox}] ${item.text}\n`;
-        });
-      });
-    }
-    
-    description += `\nResolves #${task.id}`;
-    
-    console.log(description);
-  }
-  
-  generatePrDescription();
-
-# When creating a cursor task with TaskTracker, this adds a helpful comment template
-create_task.template = """
-/**
- * Task #${task.id}: ${task.title}
- * Status: ${task.status}
- * Category: ${task.category}
- * 
- * Description:
- * ${task.description}
- * 
- * Related Files:
- * ${task.relatedFiles?.join('\n * ')}
- * 
- * Dependencies:
- * ${task.dependencies?.map(id => `#${id}`).join(', ')}
- */
-"""
-
-# Generate documentation comment
-task.doc_comment = """
-/**
- * ${1:Function description}
- * 
- * Related to Task #${2:taskId}: ${3:taskTitle}
- * 
- * @param {${4:Type}} ${5:paramName} - ${6:Description}
- * @returns {${7:Type}} ${8:Description}
- */
-"""
-
-# Custom key bindings for TaskTracker
-key.ctrl+alt+t = task.get_tasks
-key.ctrl+alt+n = task.add_quick "New task from Cursor" feature
-key.ctrl+alt+c = task.track_changes
-key.ctrl+alt+v = task.view_task ${cursor.selected}
-key.ctrl+alt+d = task.status_done ${cursor.selected}
-key.ctrl+shift+b = task.burndown --format=ascii
-
-# Add cursor status bar integration
-statusbar.left = "TaskTracker: ${task.current_task || 'No task'}"
-statusbar.right = "Priority: ${task.current_priority || 'None'}"
+  ]
+}

@@ -1,160 +1,128 @@
-# TaskTracker Documentation
+# TaskTracker
 
-This directory contains all documentation for the TaskTracker project.
+A lightweight, modular task management system for developers.
 
-## Directory Structure
+## Overview
 
-- **guides/** - In-depth guides on TaskTracker features and best practices
-  - ARCHIVING.md - Guide to archiving tasks
-  - BATCH-OPERATIONS.md - Guide to batch operations  
-  - COST-OPTIMIZATION.md - Guide to optimizing costs
-  - ENHANCEMENTS.md - Guide to enhancing TaskTracker
-  - EXAMPLES.md - Examples of TaskTracker usage
-  - UPDATING.md - Guide to updating from previous versions
+TaskTracker provides a command-line interface for tracking tasks, monitoring changes, and managing project workflows. It's designed to be simple, fast, and integrated with your development process.
 
-- **ide-integrations/** - Documentation for IDE integrations
-  - cursor-integration.md - Cursor IDE integration guide
-  - ide-integration.md - General IDE integration overview
-  - vscode-integration/ - VSCode integration files
-  - jetbrains-integration/ - JetBrains IDE integration files
+## Features
 
-- **feedback/** - User feedback and improvement plans
-  - feedback-action-plan.md - Action plan based on feedback
-  - user-feedback-v1.5.0.md - Feedback from v1.5.0
-
-- **releases/** - Release notes for specific versions
-  - RELEASE-2.0.1.md - Release notes for v2.0.1
-
-- **cli-reference.md** - Reference for command-line interface commands
-- **QUICK-GUIDE.md** - Quick start guide
-- **REPORTS.md** - Guide to generating reports
-- **AI-INTEGRATION.md** - Guide to AI integration
-  - Covers integration with AI assistants
-  - Includes specific instructions for Claude agent integration
-  - Provides strategies for cost-efficient AI workflows
-
-Welcome to the TaskTracker documentation. This guide contains everything you need to know about installing, configuring, and using TaskTracker to manage your development tasks.
-
-## Table of Contents
-
-1. [Quick Start Guide](#quick-start-guide)
-2. [Installation](#installation)
-3. [Core Concepts](#core-concepts)
-4. [Command Reference](#command-reference)
-5. [Real-World Examples](#real-world-examples)
-6. [Reports & Statistics](#reports--statistics)
-7. [Git Integration](#git-integration)
-8. [AI Integration](#ai-integration)
-9. [Task Archiving](#task-archiving)
-10. [Configuration](#configuration)
-11. [Troubleshooting](#troubleshooting)
-
-## Quick Start Guide
-
-For a quick overview of all TaskTracker commands, see the [Quick Reference Guide](../QUICK-GUIDE.md).
+- **Task Management**: Create, update, list, and track tasks
+- **File Change Tracking**: Track which files are associated with specific tasks
+- **Archiving**: Archive completed tasks while keeping their history
+- **Git Integration**: Works with Git to track branch information and changes
+- **Customizable**: Configure categories, statuses, and more
+- **Fast & Lightweight**: No external dependencies, boots quickly
 
 ## Installation
 
-TaskTracker can be installed in any project:
-
 ```bash
 # Clone the repository
-git clone https://github.com/USERNAME/tasktracker.git
+git clone https://github.com/yourusername/tasktracker.git
 
-# Copy files to your project (or use them from the repo)
-cp -r tasktracker/core/* your-project/
+# Install globally
+cd tasktracker
+npm install -g .
 
-# Make the script executable
-cd your-project
-chmod +x tasktracker
-
-# Initialize TaskTracker
-./tasktracker init
-
-# (Optional) Set up automation
-./tasktracker automate
+# Verify installation
+tt verify
 ```
 
-For more details, see the [Installation Guide](installation.md).
+## Quick Start
 
-## Core Concepts
+```bash
+# Initialize in your project
+cd your-project
+tt init
 
-TaskTracker is built on a few key concepts:
+# Add a task
+tt add
 
-1. **Tasks**: Units of work with metadata (status, category, related files)
-2. **Changelog**: Automatically maintained history of changes
-3. **Snapshots**: Statistical captures of project state
-4. **Reports**: Visualizations and analyses of project progress
+# Or quickly add a task
+tt quick "Fix login button bug" bug
 
-Read more in the [Core Concepts Guide](concepts.md).
+# List tasks
+tt list
+
+# Update a task
+tt update 1 status in-progress
+
+# View task details
+tt view 1
+
+# Track changes
+tt changes
+```
+
+## Architecture
+
+TaskTracker has been refactored to use a modular architecture:
+
+```
+task_tracker/
+├── bin/                  # Executable entry points
+├── lib/                  # Core library code
+│   ├── commands/         # Command implementations
+│   │   ├── add.js        # Add task command
+│   │   ├── list.js       # List tasks command
+│   │   ├── ...           # Other commands
+│   │   └── index.js      # Command registry
+│   └── core/             # Core functionality
+│       ├── task-manager.js    # Task CRUD operations
+│       ├── config-manager.js  # Configuration management
+│       ├── formatting.js      # Output formatting
+│       └── ...            # Other core modules
+├── docs/                 # Documentation
+└── tests/                # Tests for all modules
+```
+
+### Command Registry Pattern
+
+TaskTracker uses a command registry pattern where:
+
+1. Each command is implemented in its own module in `lib/commands/`
+2. Commands are registered in `lib/commands/index.js`
+3. The main script dispatches commands through the registry
+
+This makes it easy to:
+- Add new commands without modifying existing code
+- Test commands individually
+- Keep command implementations focused and concise
 
 ## Command Reference
 
-TaskTracker provides a unified command interface:
+See [cli-reference.md](cli-reference.md) for a full list of commands and options.
+
+## Extensions
+
+TaskTracker supports several extensions and integrations:
+
+- **Shell Completion**: See [SHELL-COMPLETION.md](SHELL-COMPLETION.md)
+- **AI Integration**: See [AI-INTEGRATION.md](AI-INTEGRATION.md)
+- **Custom Reports**: See [REPORTS.md](REPORTS.md)
+- **Cursor Integration**: See [cursor-integration.md](cursor-integration.md)
+
+## Development
+
+See the [dev-docs/](dev-docs/) directory for information on:
+
+- How to add new commands
+- Code structure and organization
+- Testing guidelines
+- Release process
+
+## Testing
 
 ```bash
-./tasktracker <command> [options]
+# Run all tests
+npm test
+
+# Run specific test categories
+npm run test:unit
+npm run test:integration
 ```
 
-All functionality is accessible through this single command:
+## License
 
-- **Task Management**: `init`, `add`, `quick`, `update`, `list`, `view`, `changes`, `release`
-- **Statistics & Reporting**: `snapshot`, `report`, `compare`, `trends`
-- **Setup & Utilities**: `setup`, `automate`, `help`
-
-For a complete reference, see [Command Reference](commands.md).
-
-## Real-World Examples
-
-TaskTracker includes comprehensive real-world examples that demonstrate how to use its features in actual development scenarios:
-
-- Practical workflows for feature development and bug fixing
-- Examples of setting up task dependencies for complex projects
-- Custom fields usage for specialized tracking needs
-- Batch operations for efficient task management
-- AI integration examples for working with coding assistants
-- Technical debt tracking examples
-
-For detailed examples with code snippets, see the [Real-World Examples Guide](EXAMPLES.md).
-
-## Reports & Statistics
-
-TaskTracker provides powerful reporting features to help you track progress and visualize trends in your project.
-
-Learn more in the [Reports & Statistics Guide](REPORTS.md).
-
-## Git Integration
-
-TaskTracker integrates with Git to automate task tracking:
-
-- Pre-commit hooks to check for changes
-- Post-commit hooks to take snapshots
-- Integration with Git branches and tags
-
-See the [Git Integration Guide](git-integration.md) for details.
-
-## AI Integration
-
-TaskTracker is designed to work seamlessly with AI coding assistants, providing them with valuable context about your project's tasks and progress.
-
-Learn more in the [AI Integration Guide](AI-INTEGRATION.md).
-
-## Task Archiving
-
-TaskTracker includes functionality for archiving tasks and their related data.
-
-Learn more in the [Task Archiving Guide](ARCHIVING.md).
-
-## Configuration
-
-TaskTracker can be configured through files in the `.tasktracker` directory:
-
-- `config.json`: Main configuration
-- `ai_config.json`: AI integration settings
-- Custom templates for reports
-
-See the [Configuration Guide](configuration.md) for details.
-
-## Troubleshooting
-
-Having problems with TaskTracker? Check the [Troubleshooting Guide](troubleshooting.md) for common issues and solutions. 
+MIT 

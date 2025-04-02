@@ -1,0 +1,240 @@
+#!/usr/bin/env node
+
+/**
+ * TaskTracker Verification Tool (tt-verify)
+ * ---------------------------------------
+ * Verifies and validates the integrity of a TaskTracker installation
+ * 
+ * Usage:
+ *   tt verify [--fix]
+ *   
+ * Options:
+ *   --fix  Attempt to fix any issues found automatically
+ * 
+ * This tool checks for:
+ *   - Required directories and files
+ *   - Terminal compatibility
+ *   - Installation integrity
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+// Root directory of the tasktracker installation
+const rootDir = path.join(__dirname, '..');
+const libDir = path.join(rootDir, 'lib');
+const coreDir = path.join(libDir, 'core');
+const commandsDir = path.join(libDir, 'commands');
+const integrationDir = path.join(libDir, 'integration');
+const reportingDir = path.join(libDir, 'reporting');
+const testsDir = path.join(rootDir, 'tests');
+
+// Check if --fix flag is provided
+const shouldFix = process.argv.includes('--fix');
+
+// Results tracking
+const results = {
+  missingFiles: [],
+  missingDirs: [],
+  fixedFiles: 0,
+  fixedDirs: 0,
+  errors: []
+};
+
+// Critical directories that must exist
+const requiredDirs = [
+  libDir,
+  coreDir,
+  commandsDir,
+  integrationDir,
+  reportingDir,
+  testsDir,
+  path.join(testsDir, 'unit'),
+  path.join(testsDir, 'integration')
+];
+
+// Critical files that must exist
+const requiredFiles = [
+  // Core modules
+  path.join(coreDir, 'archive-manager.js'),
+  path.join(coreDir, 'config-manager.js'),
+  path.join(coreDir, 'formatting.js'),
+  path.join(coreDir, 'task-manager.js'),
+  path.join(coreDir, 'cli-parser.js'),
+  
+  // Command modules
+  path.join(commandsDir, 'index.js'),
+  path.join(commandsDir, 'add.js'),
+  path.join(commandsDir, 'list.js'),
+  path.join(commandsDir, 'update.js'),
+  path.join(commandsDir, 'view.js'),
+  path.join(commandsDir, 'help.js'),
+  path.join(commandsDir, 'init.js'),
+  path.join(commandsDir, 'quick.js'),
+  path.join(commandsDir, 'verify.js'),
+  path.join(commandsDir, 'ignore.js'),
+  
+  // Binary executables
+  path.join(rootDir, 'bin', 'tt'),
+  path.join(rootDir, 'bin', 'tt-batch'),
+  
+  // Tests
+  path.join(testsDir, 'run-tests.js')
+];
+
+/**
+ * Verifies that all required directories exist
+ * @returns {boolean} Success
+ */
+function checkRequiredDirs() {
+  console.log('Checking required directories...');
+  let success = true;
+  
+  requiredDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      console.log(`❌ Missing directory: ${path.relative(rootDir, dir)}`);
+      results.missingDirs.push(dir);
+      success = false;
+      
+      // Create directory if fix mode is enabled
+      if (shouldFix) {
+        try {
+          fs.mkdirSync(dir, { recursive: true });
+          console.log(`✅ Created directory: ${path.relative(rootDir, dir)}`);
+          results.fixedDirs++;
+        } catch (error) {
+          console.error(`❌ Error creating directory: ${error.message}`);
+          results.errors.push(`Failed to create directory: ${path.relative(rootDir, dir)}`);
+        }
+      }
+    }
+  });
+  
+  if (success) {
+    console.log('✅ All required directories exist');
+  }
+  
+  return success;
+}
+
+/**
+ * Verifies that all required files exist
+ * @returns {boolean} Success
+ */
+function checkRequiredFiles() {
+  console.log('Checking required files...');
+  let success = true;
+  
+  requiredFiles.forEach(file => {
+    if (!fs.existsSync(file)) {
+      console.log(`❌ Missing file: ${path.relative(rootDir, file)}`);
+      results.missingFiles.push(file);
+      success = false;
+      
+      // Attempt to copy from repository if fix mode is enabled
+      if (shouldFix) {
+        try {
+          // Try to pull the latest repository
+          console.log('Attempting to pull updates from repository...');
+          try {
+            execSync('git pull', { cwd: rootDir, stdio: 'pipe' });
+          } catch (error) {
+            console.warn('Warning: Could not pull from repository, trying local fix...');
+          }
+          
+          // Check if file exists after pull
+          if (fs.existsSync(file)) {
+            console.log(`✅ File restored: ${path.relative(rootDir, file)}`);
+            results.fixedFiles++;
+          } else {
+            console.error(`❌ Could not restore file: ${path.relative(rootDir, file)}`);
+            results.errors.push(`Failed to restore file: ${path.relative(rootDir, file)}`);
+          }
+        } catch (error) {
+          console.error(`❌ Error fixing file: ${error.message}`);
+          results.errors.push(`Failed to fix file: ${path.relative(rootDir, file)}`);
+        }
+      }
+    }
+  });
+  
+  if (success) {
+    console.log('✅ All required files exist');
+  }
+  
+  return success;
+}
+
+/**
+ * Checks terminal compatibility
+ * @returns {boolean} Success
+ */
+function checkTerminalCompatibility() {
+  console.log('Checking terminal compatibility...');
+  
+  const term = process.env.TERM || '';
+  const isInteractive = process.stdout.isTTY;
+  
+  if (!isInteractive) {
+    console.warn('⚠️ Warning: Non-interactive terminal detected');
+  }
+  
+  console.log(`Terminal type: ${term || 'unknown'}`);
+  
+  // Add terminal compatibility settings if fix mode is enabled
+  if (shouldFix) {
+    try {
+      execSync(`${path.join(__dirname, 'tt')} update-config suppress-terminal-warnings`, { 
+        stdio: 'pipe' 
+      });
+      console.log('✅ Terminal compatibility settings updated');
+    } catch (error) {
+      console.error(`❌ Error updating terminal settings: ${error.message}`);
+      results.errors.push('Failed to update terminal compatibility settings');
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Main verification function
+ */
+async function verify() {
+  console.log('🔍 Verifying TaskTracker installation...');
+  
+  const dirsOk = checkRequiredDirs();
+  const filesOk = checkRequiredFiles();
+  const terminalOk = checkTerminalCompatibility();
+  
+  // Print summary
+  console.log('\n📋 Verification Summary:');
+  console.log(`- Missing directories: ${results.missingDirs.length}`);
+  console.log(`- Missing files: ${results.missingFiles.length}`);
+  console.log(`- Directories fixed: ${results.fixedDirs}`);
+  console.log(`- Files fixed: ${results.fixedFiles}`);
+  console.log(`- Errors: ${results.errors.length}`);
+  
+  if (results.errors.length > 0) {
+    console.log('\n❌ Errors:');
+    results.errors.forEach(error => console.log(`- ${error}`));
+  }
+  
+  if (dirsOk && filesOk && terminalOk) {
+    console.log('\n✅ TaskTracker installation is valid!');
+    return true;
+  } else if (results.missingDirs.length === 0 && results.missingFiles.length === 0) {
+    console.log('\n✅ TaskTracker installation is now valid after fixes!');
+    return true;
+  } else {
+    console.log('\n❌ TaskTracker installation has issues.');
+    console.log('Run with --fix to attempt automatic repairs, or reinstall.');
+    return false;
+  }
+}
+
+// Run verification
+verify().then(success => {
+  process.exit(success ? 0 : 1);
+}); 

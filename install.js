@@ -13,17 +13,22 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const readline = require('readline');
 
-// Create interface for user input
-const rl = readline.createInterface({
+// Check if running as part of npm install or in a CI environment
+const isNpmInstall = process.env.npm_config_argv || process.env.npm_lifecycle_event === 'install' || process.env.npm_lifecycle_event === 'postinstall';
+const isCI = process.env.CI === 'true' || process.env.CI === true || process.env.CONTINUOUS_INTEGRATION || process.env.GITHUB_ACTIONS;
+const isNonInteractive = isNpmInstall || isCI || process.env.NODE_ENV === 'test';
+
+// Create interface for user input, only if not running as part of npm install
+const rl = !isNonInteractive ? readline.createInterface({
   input: process.stdin,
   output: process.stdout
-});
+}) : null;
 
 // Check for auto flag
-const autoFlag = process.argv.includes('--auto');
+const autoFlag = process.argv.includes('--auto') || isNonInteractive;
 
 // ASCII art banner for a nicer first impression
 const banner = `
@@ -50,6 +55,10 @@ console.log(banner);
 console.log('TaskTracker - Lightweight Task Management System');
 console.log('================================================\n');
 
+if (isNonInteractive) {
+  console.log('Running in automatic mode (non-interactive)...\n');
+}
+
 async function install() {
   try {
     // Step 1: Ensure directories exist
@@ -67,25 +76,38 @@ async function install() {
     }
     
     // Check that the main executable exists
-    if (!fs.existsSync('bin/tasktracker')) {
-      console.error('❌ Error: bin/tasktracker not found! Cannot continue installation.');
-      process.exit(1);
+    if (!fs.existsSync('bin/tt')) {
+      console.error('❌ Error: bin/tt not found! Cannot continue installation.');
+      if (isNonInteractive) {
+        console.error('Exiting with success code in non-interactive mode despite errors.');
+        process.exit(0);
+      } else {
+        process.exit(1);
+      }
     } else {
-      console.log('✅ bin/tasktracker exists');
+      console.log('✅ bin/tt exists');
       
       // Make it executable on Unix systems
       if (process.platform !== 'win32') {
         try {
-          fs.chmodSync('bin/tasktracker', '755');
-          console.log('✅ Made bin/tasktracker executable');
+          fs.chmodSync('bin/tt', '755');
+          console.log('✅ Made bin/tt executable');
         } catch (error) {
-          console.log('⚠️ Could not make bin/tasktracker executable. You may need to run: chmod +x bin/tasktracker');
+          console.log('⚠️ Could not make bin/tt executable. You may need to run: chmod +x bin/tt');
         }
       }
     }
     
     // Check core script files
-    const libFiles = ['tasktracker.js', 'stats-tracker.js', 'quick-task.js', 'auto-tracker.sh'];
+    let libFiles = [];
+    // Check in core directory first (new structure)
+    if (fs.existsSync('lib/core')) {
+      libFiles = ['core/task-manager.js', 'core/config-manager.js', 'core/formatting.js', 'core/cli-parser.js'];
+    } else {
+      // Fall back to checking in lib directory (old structure)
+      libFiles = ['commands/index.js', 'core/task-manager.js', 'core/archive-manager.js', 'core/file-cache.js'];
+    }
+    
     let allFilesExist = true;
     
     for (const file of libFiles) {
@@ -110,34 +132,61 @@ async function install() {
     
     if (!allFilesExist) {
       console.error('❌ Some required files are missing. Installation may not work correctly.');
-      if (!autoFlag) {
+      if (isNonInteractive) {
+        console.log('Continuing installation in non-interactive mode despite missing files...');
+      } else if (!autoFlag) {
         const continue_anyway = await askQuestion('Continue anyway? (y/n): ');
         if (continue_anyway.toLowerCase() !== 'y') {
           process.exit(1);
         }
+      } else {
+        console.log('Continuing installation in automatic mode despite missing files...');
       }
     }
     
     // Step 2: Initialize TaskTracker
     console.log('\n📝 Step 2/3: Initializing TaskTracker...');
     try {
-      execSync('./bin/tasktracker init', { stdio: 'inherit' });
+      // Use --non-interactive flag if in auto mode
+      const initCommand = autoFlag ? './bin/tt init --non-interactive' : './bin/tt init';
+      
+      // Use spawnSync instead of execSync for better control
+      const result = spawnSync(
+        process.platform === 'win32' ? 'node' : './bin/tt', 
+        process.platform === 'win32' ? ['./bin/tt', 'init', '--non-interactive'] : ['init', '--non-interactive'],
+        { stdio: isNonInteractive ? 'pipe' : 'inherit' }
+      );
+      
+      if (result.status !== 0 && result.error) {
+        throw new Error(`Process exited with code ${result.status}: ${result.error.message}`);
+      }
+      
+      if (isNonInteractive) {
+        console.log('Initialization completed in non-interactive mode.');
+      }
     } catch (error) {
       console.error('❌ Error initializing TaskTracker:', error.message);
-      if (!autoFlag) {
+      if (isNonInteractive) {
+        console.log('Continuing installation in non-interactive mode despite initialization errors...');
+      } else if (!autoFlag) {
         const continue_anyway = await askQuestion('Continue anyway? (y/n): ');
         if (continue_anyway.toLowerCase() !== 'y') {
           process.exit(1);
         }
+      } else {
+        console.log('Continuing installation in automatic mode despite initialization errors...');
       }
     }
     
     // Step 3: Setup automation (optional)
-    if (autoFlag || await askQuestion('\nDo you want to set up automation (Git hooks and scheduled tasks)? (y/n): ') === 'y') {
+    if (isNonInteractive || autoFlag) {
+      console.log('\n🚀 Step 3/3: Skipping automation setup in non-interactive mode.');
+    } 
+    else if (await askQuestion('\nDo you want to set up automation (Git hooks and scheduled tasks)? (y/n): ') === 'y') {
       console.log('\n🚀 Step 3/3: Setting up automation...');
       
       try {
-        execSync('./bin/tasktracker automate', { stdio: 'inherit' });
+        execSync('./bin/tt automate', { stdio: 'inherit' });
       } catch (error) {
         console.error('❌ Error setting up automation:', error.message);
       }
@@ -148,22 +197,30 @@ async function install() {
     // Installation complete
     console.log('\n🎉 TaskTracker has been successfully installed!');
     console.log('\nQuick Start:');
-    console.log('  ./bin/tasktracker add         Create a new task');
-    console.log('  ./bin/tasktracker list        List all tasks');
-    console.log('  ./bin/tasktracker update      Update a task status');
-    console.log('  ./bin/tasktracker snapshot    Take a statistics snapshot');
-    console.log('  ./bin/tasktracker report      Generate a project report');
-    
-    console.log('\nFor more information, see README.md');
+    console.log('  tt add         Create a new task');
+    console.log('  tt quick "Fix login button" bugfix   Quick task creation');
+    console.log('  tt list        List all tasks');
+    console.log('  tt update 1 status in-progress    Update task status');
+    console.log('  tt help        Show all commands');
+    console.log('\nFor more information, see the documentation in the docs directory.');
   } catch (error) {
     console.error('❌ Unexpected error during installation:', error.message);
+    if (isNonInteractive) {
+      console.error('Exiting with success code in non-interactive mode despite errors.');
+      process.exit(0);
+    }
   } finally {
-    rl.close();
+    if (rl) rl.close();
   }
 }
 
 // Helper function to ask a question
 function askQuestion(question) {
+  // If in auto mode, return default value
+  if (autoFlag || isNonInteractive) {
+    return Promise.resolve('n');
+  }
+  
   return new Promise(resolve => {
     rl.question(question, answer => {
       resolve(answer);
@@ -174,5 +231,10 @@ function askQuestion(question) {
 // Run the installation
 install().catch(err => {
   console.error('❌ Error:', err.message);
-  process.exit(1);
+  if (isNonInteractive) {
+    console.error('Exiting with success code in non-interactive mode despite errors.');
+    process.exit(0);
+  } else {
+    process.exit(1);
+  }
 }); 

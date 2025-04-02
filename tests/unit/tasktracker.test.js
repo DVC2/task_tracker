@@ -7,8 +7,8 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-// Path to the tasktracker CLI
-const TASKTRACKER_CLI = path.resolve(__dirname, '../../bin/tasktracker');
+// Path to the TaskTracker CLI
+const TT_CLI = path.resolve(__dirname, '../../bin/tt');
 
 // Test task data
 const TEST_TASK = {
@@ -23,9 +23,9 @@ if (!fs.existsSync(TEST_DIR)) {
   fs.mkdirSync(TEST_DIR, { recursive: true });
 }
 
-// Helper function to run tasktracker commands in test mode
+// Helper function to run TaskTracker commands in test mode
 function runCommand(args) {
-  const command = `${TASKTRACKER_CLI} ${args} --test-mode --silent`;
+  const command = `${TT_CLI} ${args} --test-mode --silent`;
   try {
     return execSync(command, { encoding: 'utf8' });
   } catch (error) {
