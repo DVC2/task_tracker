@@ -23,6 +23,7 @@ const { parseArgs } = require('../lib/core/cli-parser');
 const { output } = require('../lib/core/formatting');
 const commandRegistry = require('../lib/commands/index');
 const help = require('../lib/commands/help');
+const cliSecurity = require('../lib/utils/cli-security');
 
 /**
  * Loading animation module
@@ -87,8 +88,32 @@ commandRegistry.initCommandPaths(appRoot);
 
 // Process command line arguments
 const args = process.argv.slice(2);
+
+// Perform initial security check on raw arguments
+const securityCheck = cliSecurity.sanitizeArgs(args);
+if (!securityCheck.valid) {
+  output('⚠️ Security warning: Potentially unsafe command arguments detected', 'warning');
+  
+  // Check for any critical security issues that should block execution
+  const criticalIssues = securityCheck.validationIssues.filter(issue => 
+    issue.includes('dangerous content') || 
+    issue.includes('path traversal') ||
+    issue.includes('Invalid file path')
+  );
+  
+  if (criticalIssues.length > 0) {
+    output('❌ Command execution blocked due to security concerns:', 'error');
+    criticalIssues.forEach(issue => {
+      output(`  - ${issue}`, 'error');
+    });
+    output('Please check your command arguments and try again.', 'error');
+    process.exit(1);
+  }
+}
+
+// Parse arguments with built-in validation
 const command = args.length > 0 ? args[0] : null;
-const { commandArgs, options: globalOptions } = parseArgs(args.slice(1));
+const { commandArgs, options: globalOptions, validationIssues, valid } = parseArgs(args.slice(1));
 
 // Start command execution timing
 let commandTimer;
@@ -114,7 +139,7 @@ const commandHandler = commandRegistry.getCommand(command);
 
 if (commandHandler) {
   try {
-    // Execute the command
+    // Execute the command with sanitized arguments
     const result = commandHandler(...commandArgs, globalOptions);
     
     // Handle promises if the command returns one

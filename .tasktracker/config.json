@@ -1,8 +1,4 @@
 {
-  "projectName": "Sample Project",
-  "projectType": "javascript",
-  "versioningType": "semver",
-  "currentVersion": "1.2.0",
   "taskCategories": [
     "feature",
     "bugfix",
@@ -10,19 +6,32 @@
     "docs",
     "test",
     "chore",
-    "technical-debt"
+    "technical-debt",
+    {
+      "invalidCategoryObject": true
+    },
+    null,
+    123,
+    []
   ],
   "taskStatuses": [
     "todo",
     "in-progress",
     "review",
-    "done"
+    "done",
+    "invalid-status-1",
+    "invalid-status-2",
+    "",
+    null
   ],
   "priorityLevels": [
     "p0-critical",
     "p1-high",
     "p2-medium",
-    "p3-low"
+    "p3-low",
+    {
+      "invalidPriority": true
+    }
   ],
   "effortEstimation": [
     "1-trivial",
@@ -30,23 +39,47 @@
     "3-medium",
     "5-large",
     "8-xlarge",
-    "13-complex"
+    "13-complex",
+    "infinite"
   ],
-  "changelogSections": [
-    "Added",
-    "Changed",
-    "Fixed",
-    "Deprecated",
-    "Removed",
-    "Security"
+  "currentTask": "not-a-number",
+  "showChalkWarnings": "not-a-boolean",
+  "projectName": "task_tracker",
+  "maxDisplayWidth": "not-a-number",
+  "defaultListView": "invalid-view",
+  "dateFormat": [
+    "array",
+    "instead",
+    "of",
+    "string"
   ],
-  "gitIntegration": true,
+  "enableGitIntegration": 123,
+  "enableDependencyTracking": null,
+  "projectType": {
+    "not": "a-string"
+  },
+  "versioningType": {
+    "not": "a-string"
+  },
+  "currentVersion": {
+    "not": "a-string"
+  },
+  "changelogSections": null,
+  "gitIntegration": "not-a-boolean",
   "customSettings": {
-    "autoAssignAuthors": true,
-    "defaultBranchPrefix": "task/",
-    "defaultCategory": "feature",
-    "defaultStatus": "todo",
-    "defaultPriority": "p2-medium",
-    "defaultEffort": "3-medium"
+    "autoAssignAuthors": "not-a-boolean",
+    "defaultBranchPrefix": null,
+    "defaultCategory": {
+      "not": "a-string"
+    },
+    "defaultStatus": {},
+    "defaultPriority": [],
+    "defaultEffort": 123
+  },
+  "invalidTopLevelKey": "This should be ignored",
+  "anotherInvalidKey": {
+    "this": "should",
+    "also": "be",
+    "ignored": true
   }
-} 
+}

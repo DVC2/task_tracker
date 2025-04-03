@@ -1,0 +1,343 @@
+#!/usr/bin/env node
+
+/**
+ * TaskTracker Security Verification Script
+ * 
+ * This script checks for common security issues in the TaskTracker system:
+ * - File permissions
+ * - Path traversal vulnerabilities
+ * - Data validation
+ * - Secure storage
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+// Define the app root
+const appRoot = path.resolve(__dirname, '..');
+const dataDir = process.env.TASKTRACKER_DATA_DIR || path.join(appRoot, '.tasktracker');
+const tasksPath = path.join(dataDir, 'tasks.json');
+const configPath = path.join(dataDir, 'config.json');
+
+// Track security issues
+const securityIssues = [];
+const securityPassed = [];
+
+console.log('🔒 TaskTracker Security Verification');
+console.log('===================================\n');
+
+// Create colors for output
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m'
+};
+
+/**
+ * Check file permissions for sensitive files
+ */
+function checkFilePermissions() {
+  console.log(`${colors.blue}Checking file permissions...${colors.reset}`);
+  
+  // Only check permissions on Unix systems
+  if (process.platform === 'win32') {
+    console.log(`${colors.yellow}⚠️ Skipping permission checks on Windows${colors.reset}`);
+    return;
+  }
+  
+  const filesToCheck = [
+    { path: tasksPath, description: 'Tasks data file' },
+    { path: configPath, description: 'Configuration file' }
+  ];
+  
+  filesToCheck.forEach(file => {
+    try {
+      if (fs.existsSync(file.path)) {
+        const stats = fs.statSync(file.path);
+        const mode = stats.mode & 0o777; // Get permission bits
+        
+        // Check if permissions are too open
+        if (mode & 0o077) { // Check if group/others have any permissions
+          securityIssues.push(`${file.description} (${file.path}) has insecure permissions: ${mode.toString(8)}`);
+          console.log(`${colors.red}❌ ${file.description} has insecure permissions: ${mode.toString(8)}${colors.reset}`);
+          
+          // Try to fix the permissions
+          try {
+            fs.chmodSync(file.path, 0o600); // Set to -rw-------
+            console.log(`${colors.green}✅ Fixed permissions for ${file.description}${colors.reset}`);
+          } catch (fixError) {
+            console.log(`${colors.red}❌ Failed to fix permissions: ${fixError.message}${colors.reset}`);
+          }
+        } else {
+          securityPassed.push(`${file.description} has secure permissions`);
+          console.log(`${colors.green}✅ ${file.description} has secure permissions${colors.reset}`);
+        }
+      } else {
+        console.log(`${colors.yellow}⚠️ ${file.description} not found (${file.path})${colors.reset}`);
+      }
+    } catch (error) {
+      securityIssues.push(`Failed to check permissions for ${file.description}: ${error.message}`);
+      console.log(`${colors.red}❌ Failed to check permissions for ${file.description}: ${error.message}${colors.reset}`);
+    }
+  });
+  
+  // Check data directory permissions
+  try {
+    if (fs.existsSync(dataDir)) {
+      const stats = fs.statSync(dataDir);
+      const mode = stats.mode & 0o777; // Get permission bits
+      
+      // Check if permissions are too open
+      if (mode & 0o077) { // Check if group/others have any permissions
+        securityIssues.push(`Data directory (${dataDir}) has insecure permissions: ${mode.toString(8)}`);
+        console.log(`${colors.red}❌ Data directory has insecure permissions: ${mode.toString(8)}${colors.reset}`);
+        
+        // Try to fix the permissions
+        try {
+          fs.chmodSync(dataDir, 0o700); // Set to drwx------
+          console.log(`${colors.green}✅ Fixed permissions for data directory${colors.reset}`);
+        } catch (fixError) {
+          console.log(`${colors.red}❌ Failed to fix permissions: ${fixError.message}${colors.reset}`);
+        }
+      } else {
+        securityPassed.push(`Data directory has secure permissions`);
+        console.log(`${colors.green}✅ Data directory has secure permissions${colors.reset}`);
+      }
+    } else {
+      console.log(`${colors.yellow}⚠️ Data directory not found (${dataDir})${colors.reset}`);
+    }
+  } catch (error) {
+    securityIssues.push(`Failed to check permissions for data directory: ${error.message}`);
+    console.log(`${colors.red}❌ Failed to check permissions for data directory: ${error.message}${colors.reset}`);
+  }
+}
+
+/**
+ * Check for unsafe dependencies
+ */
+function checkDependencies() {
+  console.log(`\n${colors.blue}Checking dependencies...${colors.reset}`);
+  
+  try {
+    const packageJsonPath = path.join(appRoot, 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      console.log(`${colors.yellow}⚠️ package.json not found${colors.reset}`);
+      return;
+    }
+    
+    const packageJson = require(packageJsonPath);
+    const allDeps = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies
+    };
+    
+    // Simple check for known problematic packages
+    const problematicPackages = [
+      'eval', 'unsafe-eval', 'unsafe-perm', 'node-serialize'
+    ];
+    
+    let foundProblematicPackages = false;
+    
+    for (const packageName in allDeps) {
+      if (problematicPackages.some(badPkg => packageName.includes(badPkg))) {
+        securityIssues.push(`Potentially unsafe dependency: ${packageName}`);
+        console.log(`${colors.red}❌ Potentially unsafe dependency: ${packageName}${colors.reset}`);
+        foundProblematicPackages = true;
+      }
+    }
+    
+    if (!foundProblematicPackages) {
+      securityPassed.push('No known unsafe dependencies found');
+      console.log(`${colors.green}✅ No known unsafe dependencies found${colors.reset}`);
+    }
+    
+    // Check for outdated packages
+    try {
+      console.log(`${colors.blue}Checking for outdated packages with security vulnerabilities...${colors.reset}`);
+      
+      // This will work if npm audit is available
+      const auditOutput = execSync('npm audit --json', { 
+        cwd: appRoot,
+        stdio: ['pipe', 'pipe', 'pipe']
+      }).toString();
+      
+      const auditData = JSON.parse(auditOutput);
+      
+      if (auditData.metadata && auditData.metadata.vulnerabilities) {
+        const vulns = auditData.metadata.vulnerabilities;
+        const totalVulns = vulns.low + vulns.moderate + vulns.high + vulns.critical;
+        
+        if (totalVulns > 0) {
+          securityIssues.push(`Found ${totalVulns} security vulnerabilities in dependencies`);
+          console.log(`${colors.red}❌ Found ${totalVulns} security vulnerabilities in dependencies${colors.reset}`);
+          
+          if (vulns.high > 0 || vulns.critical > 0) {
+            console.log(`${colors.red}   - Critical: ${vulns.critical}, High: ${vulns.high}, Moderate: ${vulns.moderate}, Low: ${vulns.low}${colors.reset}`);
+            console.log(`${colors.yellow}   Run 'npm audit fix' to attempt to fix these issues${colors.reset}`);
+          }
+        } else {
+          securityPassed.push('No security vulnerabilities found in dependencies');
+          console.log(`${colors.green}✅ No security vulnerabilities found in dependencies${colors.reset}`);
+        }
+      }
+    } catch (error) {
+      console.log(`${colors.yellow}⚠️ Could not run dependency security check: ${error.message}${colors.reset}`);
+    }
+  } catch (error) {
+    securityIssues.push(`Failed to check dependencies: ${error.message}`);
+    console.log(`${colors.red}❌ Failed to check dependencies: ${error.message}${colors.reset}`);
+  }
+}
+
+/**
+ * Check for sensitive data exposure
+ */
+function checkDataExposure() {
+  console.log(`\n${colors.blue}Checking for sensitive data exposure...${colors.reset}`);
+  
+  try {
+    // Check if tasks.json contains sensitive data
+    if (fs.existsSync(tasksPath)) {
+      const tasksData = JSON.parse(fs.readFileSync(tasksPath, 'utf8'));
+      
+      if (tasksData.tasks && Array.isArray(tasksData.tasks)) {
+        // Check for sensitive patterns in task data
+        const sensitivePatterns = [
+          /password/i, /secret/i, /key/i, /token/i, /api[-_]?key/i,
+          /credential/i, /auth/i, /private/i
+        ];
+        
+        let sensitiveDataFound = false;
+        
+        tasksData.tasks.forEach(task => {
+          for (const field in task) {
+            const value = task[field];
+            if (typeof value === 'string') {
+              for (const pattern of sensitivePatterns) {
+                if (pattern.test(field) || pattern.test(value)) {
+                  securityIssues.push(`Potentially sensitive data found in task #${task.id}: ${field}`);
+                  console.log(`${colors.red}❌ Potentially sensitive data found in task #${task.id}: ${field}${colors.reset}`);
+                  sensitiveDataFound = true;
+                  break;
+                }
+              }
+            }
+          }
+        });
+        
+        if (!sensitiveDataFound) {
+          securityPassed.push('No obvious sensitive data found in tasks');
+          console.log(`${colors.green}✅ No obvious sensitive data found in tasks${colors.reset}`);
+        }
+      }
+    } else {
+      console.log(`${colors.yellow}⚠️ Tasks file not found (${tasksPath})${colors.reset}`);
+    }
+  } catch (error) {
+    securityIssues.push(`Failed to check for sensitive data: ${error.message}`);
+    console.log(`${colors.red}❌ Failed to check for sensitive data: ${error.message}${colors.reset}`);
+  }
+}
+
+/**
+ * Check for code injection vulnerabilities
+ */
+function checkCodeInjection() {
+  console.log(`\n${colors.blue}Checking for code injection vulnerabilities...${colors.reset}`);
+  
+  const vulnerablePatterns = [
+    { pattern: /eval\s*\(/g, description: 'eval() usage' },
+    { pattern: /new\s+Function\s*\(/g, description: 'new Function() usage' },
+    { pattern: /setTimeout\s*\(\s*("|'|`)/g, description: 'setTimeout with string argument' },
+    { pattern: /setInterval\s*\(\s*("|'|`)/g, description: 'setInterval with string argument' },
+    { pattern: /child_process\.exec\s*\(/g, description: 'child_process.exec usage' },
+  ];
+  
+  let foundVulnerableCode = false;
+  
+  // Recursively scan directory for JS files
+  function scanDirectory(directory) {
+    const entries = fs.readdirSync(directory, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(directory, entry.name);
+      
+      // Skip node_modules and hidden directories
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && !entry.name.startsWith('.')) {
+          scanDirectory(fullPath);
+        }
+        continue;
+      }
+      
+      // Only check JavaScript files
+      if (!entry.name.endsWith('.js')) {
+        continue;
+      }
+      
+      // Read the file
+      const content = fs.readFileSync(fullPath, 'utf8');
+      
+      // Check for vulnerable patterns
+      for (const { pattern, description } of vulnerablePatterns) {
+        if (pattern.test(content)) {
+          securityIssues.push(`Potential code injection vulnerability: ${description} in ${fullPath}`);
+          console.log(`${colors.red}❌ Potential code injection vulnerability: ${description} in ${fullPath}${colors.reset}`);
+          foundVulnerableCode = true;
+        }
+      }
+    }
+  }
+  
+  try {
+    // Scan the lib directory
+    const libPath = path.join(appRoot, 'lib');
+    if (fs.existsSync(libPath)) {
+      scanDirectory(libPath);
+    }
+    
+    // Scan the bin directory
+    const binPath = path.join(appRoot, 'bin');
+    if (fs.existsSync(binPath)) {
+      scanDirectory(binPath);
+    }
+    
+    if (!foundVulnerableCode) {
+      securityPassed.push('No obvious code injection vulnerabilities found');
+      console.log(`${colors.green}✅ No obvious code injection vulnerabilities found${colors.reset}`);
+    }
+  } catch (error) {
+    securityIssues.push(`Failed to check for code injection: ${error.message}`);
+    console.log(`${colors.red}❌ Failed to check for code injection: ${error.message}${colors.reset}`);
+  }
+}
+
+// Run security checks
+checkFilePermissions();
+checkDependencies();
+checkDataExposure();
+checkCodeInjection();
+
+// Display summary
+console.log('\n🔒 Security Verification Summary');
+console.log('============================');
+
+if (securityIssues.length === 0) {
+  console.log(`${colors.green}✅ No security issues found${colors.reset}`);
+} else {
+  console.log(`${colors.red}❌ Found ${securityIssues.length} security issues:${colors.reset}`);
+  securityIssues.forEach((issue, index) => {
+    console.log(`${colors.red}${index + 1}. ${issue}${colors.reset}`);
+  });
+}
+
+console.log(`\n${colors.green}✅ Passed ${securityPassed.length} security checks${colors.reset}`);
+
+// Exit with appropriate status code
+process.exit(securityIssues.length > 0 ? 1 : 0); 

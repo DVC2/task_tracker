@@ -58,6 +58,21 @@ const assert = {
     }
   },
   
+  notContains: (haystack, needle, message) => {
+    results.total++;
+    if (!haystack.includes(needle)) {
+      console.log(chalk.green('✓ PASS:'), message || `Value does not contain "${needle}"`);
+      results.passed++;
+      return true;
+    } else {
+      console.log(chalk.red('✗ FAIL:'), message || `Value should not contain "${needle}"`);
+      console.log('  Haystack:', haystack);
+      console.log('  Needle:', needle);
+      results.failed++;
+      return false;
+    }
+  },
+  
   true: (value, message) => {
     results.total++;
     if (value) {

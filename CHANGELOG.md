@@ -66,18 +66,23 @@
 - Configuration loading issue on first run
 - Task list sorting inconsistencies
 
-## [1.4.0] - 2023-04-01
+## [1.4.0] - 2023-04-03
 
-### Added
-- Task archiving and restoration
-- File tracking improvements
-- Stats command for project metrics
-- Support for custom categories
+### Features
 
-### Changed
-- Better terminal output formatting
-- Improved task filtering options
-- Enhanced help documentation
+- Fixed terminal output formatting issues for task titles and better table display
+- Implemented numbered selection for task attributes in interactive mode
+- Added AI context generation command (`tt context`) for better AI integration
+- Added automatic file linking to tasks based on current open file
+- Improved security with input validation, secure file permissions, and sanitization
+- Added security verification script (`tt-security`) to check for common security issues
+
+### Bug Fixes
+
+- Fixed spacing issues in task titles that were causing display problems
+- Fixed ASCII art banner to properly display the complete logo
+- Fixed file operations to handle missing directories and invalid files gracefully
+- Improved error handling and validation across commands
 
 ## [1.3.0] - 2023-03-15
 
