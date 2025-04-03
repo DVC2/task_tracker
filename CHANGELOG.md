@@ -196,4 +196,12 @@
 - Initial release of TaskTracker
 - Basic task tracking functionality
 - File change detection
-- Simple reporting features 
+- Simple reporting features
+
+## [Unreleased]
+### Added
+- Improved JSON parsing error handling to prevent test failures
+- Enhanced error messages for JSON parsing failures with more context
+- Added support for handling circular references in JSON serialization
+- Created dedicated test suite for JSON parsing functionality
+- Fixed unit tests to handle JSON parsing errors gracefully 

@@ -21,9 +21,94 @@ jobs:
       - name: Run security tests
         run: node tests/run-tests.js security
 
+  json_parsing_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Test JSON parsing error handling
+        run: |
+          # Create test script
+          echo "
+          /**
+           * Simple JSON Parsing Test
+           */
+          
+          const { safeJsonParse } = require('./lib/utils/security-middleware');
+          const { formatJsonResult } = require('./lib/utils/structured-output');
+          
+          let allTestsPassed = true;
+          let testsRun = 0;
+          
+          function runTest(name, testFn) {
+            testsRun++;
+            console.log(\`\n=== Testing \${name} ===\`);
+            try {
+              const passed = testFn();
+              console.log(\`Test passed: \${passed}\`);
+              if (!passed) allTestsPassed = false;
+              return passed;
+            } catch (error) {
+              console.error(\`Test failed: \${error.message}\`);
+              allTestsPassed = false;
+              return false;
+            }
+          }
+          
+          // Test valid JSON
+          runTest('Valid JSON', () => {
+            const validJson = '{\"name\":\"test\",\"value\":42}';
+            const validResult = safeJsonParse(validJson);
+            return validResult.name === 'test' && validResult.value === 42;
+          });
+          
+          // Test empty string
+          runTest('Empty String', () => {
+            const emptyResult = safeJsonParse('', { default: true });
+            return emptyResult.default === true;
+          });
+          
+          // Test malformed JSON
+          runTest('Malformed JSON', () => {
+            const malformedJson = '{name: \"test\"}';
+            const malformedResult = safeJsonParse(malformedJson, { default: true });
+            return malformedResult.default === true;
+          });
+          
+          // Test non-string input
+          runTest('Non-String Input', () => {
+            const nullResult = safeJsonParse(null, { default: true });
+            return nullResult.default === true;
+          });
+          
+          // Test circular references
+          runTest('Circular References', () => {
+            const obj = { name: 'circular' };
+            obj.self = obj; // Create circular reference
+            const circularResult = formatJsonResult(obj);
+            return circularResult.success === true && 
+                   circularResult.data.name === 'circular' && 
+                   typeof circularResult.data.self === 'string';
+          });
+          
+          console.log(\`\n=== Testing Complete ===\`);
+          console.log(\`\${testsRun} tests run, all tests passed: \${allTestsPassed}\`);
+          
+          process.exit(allTestsPassed ? 0 : 1);
+          " > json-parsing-test.js
+          
+          # Run the test
+          node json-parsing-test.js
+
   unit_test:
     runs-on: ubuntu-latest
-    needs: security_test
+    needs: [security_test, json_parsing_test]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Node.js

@@ -10,6 +10,9 @@
 .tasktracker/stats/
 .tasktracker/cron.log
 .tasktracker/code_health.json
+# Exclude backup files
+.tasktracker/*.backup.*
+.tasktracker/*.corrupted.*
 # But keep the .tasktracker directory itself with a .gitkeep
 !.tasktracker/.gitkeep
 !.tasktracker/reports/.gitkeep
@@ -35,6 +38,12 @@ coverage/
 test-results/
 tests/temp/*
 !tests/temp/.gitkeep
+tests/test-json-parsing/
+test-json-parsing/
+simple-json-test.js
+*-json-test.js
+tests/*-json-test.js
+json-parsing-test.js
 
 # IDE and editor files
 .idea/
