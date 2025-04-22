@@ -112,3 +112,18 @@ user-settings/
 
 # Personal settings
 .taskrc 
+
+# AI-generated temp files
+.ai-temp/
+*ai-gen*.json
+*ai-context*.json
+
+# Test run artifacts
+test-run-*/
+ai-test-results/
+
+# VSCode history
+.history/
+
+# Debug files
+.debug-* 
