@@ -50,7 +50,6 @@
   "devDependencies": {
     "eslint": "^8.29.0",
     "jest": "^29.3.1",
-    "mocha": "^11.1.0",
     "rimraf": "^3.0.2",
     "sinon": "^20.0.0"
   },

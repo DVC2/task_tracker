@@ -6,13 +6,7 @@
     "docs",
     "test",
     "chore",
-    "technical-debt",
-    {
-      "invalidCategoryObject": true
-    },
-    null,
-    123,
-    []
+    "technical-debt"
   ],
   "taskStatuses": [
     "todo",
@@ -20,18 +14,13 @@
     "review",
     "done",
     "invalid-status-1",
-    "invalid-status-2",
-    "",
-    null
+    "invalid-status-2"
   ],
   "priorityLevels": [
     "p0-critical",
     "p1-high",
     "p2-medium",
-    "p3-low",
-    {
-      "invalidPriority": true
-    }
+    "p3-low"
   ],
   "effortEstimation": [
     "1-trivial",
@@ -42,44 +31,12 @@
     "13-complex",
     "infinite"
   ],
-  "currentTask": "not-a-number",
-  "showChalkWarnings": "not-a-boolean",
-  "projectName": "task_tracker",
-  "maxDisplayWidth": "not-a-number",
-  "defaultListView": "invalid-view",
-  "dateFormat": [
-    "array",
-    "instead",
-    "of",
-    "string"
-  ],
-  "enableGitIntegration": 123,
-  "enableDependencyTracking": null,
-  "projectType": {
-    "not": "a-string"
-  },
-  "versioningType": {
-    "not": "a-string"
-  },
-  "currentVersion": {
-    "not": "a-string"
-  },
-  "changelogSections": null,
-  "gitIntegration": "not-a-boolean",
-  "customSettings": {
-    "autoAssignAuthors": "not-a-boolean",
-    "defaultBranchPrefix": null,
-    "defaultCategory": {
-      "not": "a-string"
-    },
-    "defaultStatus": {},
-    "defaultPriority": [],
-    "defaultEffort": 123
-  },
-  "invalidTopLevelKey": "This should be ignored",
-  "anotherInvalidKey": {
-    "this": "should",
-    "also": "be",
-    "ignored": true
-  }
+  "currentTask": null,
+  "showChalkWarnings": true,
+  "projectName": "Task",
+  "maxDisplayWidth": 120,
+  "defaultListView": "table",
+  "dateFormat": "locale",
+  "enableGitIntegration": true,
+  "enableDependencyTracking": true
 }

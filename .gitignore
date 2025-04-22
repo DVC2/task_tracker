@@ -44,6 +44,10 @@ simple-json-test.js
 *-json-test.js
 tests/*-json-test.js
 json-parsing-test.js
+# CLI test output
+cli-test-*.json
+cli-output-*.log
+command-test-*.json
 
 # IDE and editor files
 .idea/
@@ -83,10 +87,14 @@ temp/
 *.tmp
 *.temp
 *.bak
+.temp-*
+*_temp/
 
 # Logs
 logs/
 *.log
+error-*.log
+debug-*.log
 
 # Cached data
 .cache/

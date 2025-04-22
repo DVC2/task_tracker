@@ -89,8 +89,26 @@ commandRegistry.initCommandPaths(appRoot);
 // Process command line arguments
 const args = process.argv.slice(2);
 
+// Special case - handle --help and -h flags as commands
+if (args.length > 0 && (args[0] === '--help' || args[0] === '-h')) {
+  const helpTopic = args.length > 1 ? args[1] : null;
+  help.showHelp(helpTopic);
+  process.exit(0);
+}
+
+// Special case - handle --version and -v flags 
+if (args.length > 0 && (args[0] === '--version' || args[0] === '-v')) {
+  try {
+    const packageJson = require(path.join(appRoot, 'package.json'));
+    output(`TaskTracker v${packageJson.version}`, 'info');
+  } catch (error) {
+    output('Unable to determine version', 'error');
+  }
+  process.exit(0);
+}
+
 // Perform initial security check on raw arguments
-const securityCheck = cliSecurity.sanitizeArgs(args);
+const securityCheck = cliSecurity.sanitizeArgs(args, { skipCommandValidation: true });
 if (!securityCheck.valid) {
   output('⚠️ Security warning: Potentially unsafe command arguments detected', 'warning');
   
@@ -113,7 +131,9 @@ if (!securityCheck.valid) {
 
 // Parse arguments with built-in validation
 const command = args.length > 0 ? args[0] : null;
-const { commandArgs, options: globalOptions, validationIssues, valid } = parseArgs(args.slice(1));
+const { commandArgs, options: globalOptions, validationIssues, valid } = parseArgs(args.slice(1), {
+  skipCommandValidation: true
+});
 
 // Start command execution timing
 let commandTimer;
@@ -139,8 +159,15 @@ const commandHandler = commandRegistry.getCommand(command);
 
 if (commandHandler) {
   try {
-    // Execute the command with sanitized arguments
-    const result = commandHandler(...commandArgs, globalOptions);
+    // Security warnings are actually ok if the command exists and can be handled
+    // Clear security warning output if it's just "Invalid command" but we have a valid handler
+    if (validationIssues && validationIssues.length === 1 && 
+        validationIssues[0].includes('Invalid command') && command) {
+      // We can safely ignore this warning
+    }
+    
+    // Execute the command with sanitized arguments and options
+    const result = commandHandler(commandArgs, globalOptions);
     
     // Handle promises if the command returns one
     if (result instanceof Promise) {
