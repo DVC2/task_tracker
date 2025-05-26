@@ -12,7 +12,7 @@ _tasktracker_completions()
   local commands="init add quick list view update delete help context link unlink files-for-task ai ls status attach detach"
   
   # Task statuses for filtering
-  local statuses="todo in_progress done blocked" // Assuming 'review' was removed/optional
+  local statuses="todo in_progress done blocked"
   
   # Task categories (Example - might need update based on actual usage)
   local categories="feature bug docs test refactor chore"

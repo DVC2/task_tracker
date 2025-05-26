@@ -23,7 +23,7 @@ This document helps GitHub Copilot understand TaskTracker commands and functiona
 ## Task Fields
 
 Update these fields with the `update` command:
-- status: The task status (e.g., todo, in_progress, done, blocked)
+- status: The task status. Valid statuses are: todo, in-progress, done, blocked.
 - category: The type of task (e.g., feature, bugfix, refactor, docs, test, chore)
 - title: The task title
 - description: The task description

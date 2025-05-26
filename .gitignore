@@ -109,11 +109,6 @@ Thumbs.db
 logs
 *.log
 
-# Runtime data
-pids
-*.pid
-*.seed
-
 # Temporary files
 tmp/
 temp/

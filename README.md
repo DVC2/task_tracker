@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/tasktracker-cli.svg)](https://badge.fury.io/js/tasktracker-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js CI](https://github.com/tasktracker-cli/tasktracker/workflows/Node.js%20CI/badge.svg)](https://github.com/tasktracker-cli/tasktracker/actions)
+[![Node.js CI](https://github.com/DVC2/task_tracker/actions/workflows/test.yml/badge.svg)](https://github.com/DVC2/task_tracker/actions/workflows/test.yml)
 
 **Your development memory across AI sessions.**
 
@@ -222,13 +222,6 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 2. Create a feature branch
 3. Make your changes with tests
 4. Submit a pull request
-
-## 📊 **Project Stats**
-
-- 🧪 **28 tests** - All passing
-- 🎯 **Zero lint issues** - Clean codebase
-- 📦 **Lightweight** - Minimal dependencies
-- 🚀 **Fast** - Optimized for developer workflow
 
 ## 🐛 **Issues & Support**
 

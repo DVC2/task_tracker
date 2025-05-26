@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/tasktracker-cli/tasktracker#readme",
   "dependencies": {
-    "chalk": "^4.1.2",
+    "chalk": "4.1.2",
     "commander": "^9.4.1",
     "fs-extra": "^10.1.0",
     "readline-sync": "^1.4.10"
