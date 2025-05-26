@@ -8,41 +8,26 @@ _tasktracker_completions()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
   
-  # Main commands
-  local commands="init add quick list view update changes files status release ai-context context \
-                 code-health health verify update-config ignore archive restore archives commit \
-                 context-export journal performance snapshot report compare trends stats setup \
-                 automate onboard help stats"
+  # Main commands (Updated)
+  local commands="init add quick list view update delete help context link unlink files-for-task ai ls status attach detach"
   
   # Task statuses for filtering
-  local statuses="todo in-progress review done"
+  local statuses="todo in_progress done blocked" // Assuming 'review' was removed/optional
   
-  # Task categories
+  # Task categories (Example - might need update based on actual usage)
   local categories="feature bug docs test refactor chore"
   
   # Options for specific commands
   case "${prev}" in
     list)
       # tt list [status] [--options]
-      local opts="${statuses} --current --full --priority= --category= --keyword="
+      local opts="${statuses} --priority= --category= --keyword="
       COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
       return 0
       ;;
-    update)
-      # If update is the previous word, expect a task ID
-      return 0
-      ;;
-    view)
-      # If view is the previous word, expect a task ID
-      return 0
-      ;;
-    ignore)
-      local ignore_opts="add remove list init"
-      COMPREPLY=( $(compgen -W "${ignore_opts}" -- ${cur}) )
-      return 0
-      ;;
-    archive|restore)
-      # If archive/restore is the previous word, expect a task ID
+    update|view|delete|context|link|unlink|files-for-task)
+      # These commands often expect a task ID next
+      # Basic completion - just return, no suggestions here
       return 0
       ;;
     *)
@@ -54,5 +39,4 @@ _tasktracker_completions()
 }
 
 # Register the completion function
-complete -F _tasktracker_completions tt
-complete -F _tasktracker_completions tasktracker 
+complete -F _tasktracker_completions tt 

@@ -1,59 +1,70 @@
 {
   "name": "tasktracker-cli",
-  "version": "2.1.2",
-  "description": "A lightweight task management CLI for developers to track project tasks and technical debt from the command line",
+  "version": "3.0.0",
+  "description": "Developer context journal for AI-assisted coding - maintain project context across sessions",
   "main": "bin/tt",
   "bin": {
-    "tasktracker": "./bin/tasktracker",
     "tt": "./bin/tt"
   },
   "preferGlobal": true,
   "scripts": {
     "start": "node ./bin/tt",
     "init": "node ./bin/tt init",
-    "test": "node tests/test-runner.js",
-    "test:core": "node tests/test-runner.js tests/test-core-commands.js",
-    "install": "node install.js --auto",
-    "postinstall": "node install.js --auto"
+    "test": "mocha tests/unit/*.test.js",
+    "test:journal": "mocha tests/unit/journal.test.js",
+    "test:prd": "mocha tests/unit/prd.test.js",
+    "test:context": "mocha tests/unit/context.test.js",
+    "test:all": "mocha tests/**/*.test.js",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepublishOnly": "npm test && npm run lint:check"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/username/tasktracker.git"
+    "url": "git+https://github.com/tasktracker-cli/tasktracker.git"
   },
   "keywords": [
-    "task",
-    "tracker",
-    "project",
-    "management",
-    "developer",
-    "cli",
-    "git",
-    "technical-debt",
+    "developer-journal",
+    "context-management",
     "ai-assistant",
-    "cursor",
-    "ide-integration"
+    "development-context",
+    "project-memory",
+    "cli",
+    "developer-tools",
+    "ai-context",
+    "coding-assistant",
+    "project-documentation",
+    "development-workflow"
   ],
-  "author": "TaskTracker Team",
+  "author": "TaskTracker Contributors",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/username/tasktracker/issues"
+    "url": "https://github.com/tasktracker-cli/tasktracker/issues"
   },
-  "homepage": "https://github.com/username/tasktracker#readme",
+  "homepage": "https://github.com/tasktracker-cli/tasktracker#readme",
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^9.4.1",
-    "dompurify": "^3.2.4",
     "fs-extra": "^10.1.0",
-    "jsdom": "^26.0.0",
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
+    "chai": "^4.3.10",
     "eslint": "^8.29.0",
-    "jest": "^29.3.1",
+    "mocha": "^10.7.0",
     "rimraf": "^3.0.2",
     "sinon": "^20.0.0"
   },
   "engines": {
     "node": ">=12.0.0"
-  }
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "docs/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
 }

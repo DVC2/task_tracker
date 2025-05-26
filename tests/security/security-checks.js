@@ -6,7 +6,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 // Configuration
 const SENSITIVE_PATTERNS = [
@@ -147,7 +146,10 @@ function checkForDangerousPatterns() {
   return true; // Don't fail the build, just warn
 }
 
-// Test: Verify .taskignore configurations
+/**
+ * Verify .taskignore configurations
+ * @returns {boolean} Success status
+ */
 function verifyTaskIgnore() {
   console.log('\n📋 Verifying .taskignore configuration...');
   
@@ -206,8 +208,9 @@ function runAllTests() {
   const success = results.sensitiveInfo && results.taskIgnoreConfig;
   console.log(`\nOverall Result: ${success ? '✅ PASS' : '❌ FAIL'}`);
   
-  process.exit(success ? 0 : 1);
+  return success ? 0 : 1;
 }
 
 // Execute tests
-runAllTests(); 
+// Export result for testing frameworks
+module.exports = runAllTests(); 

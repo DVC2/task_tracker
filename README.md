@@ -1,165 +1,253 @@
-# TaskTracker
+# TaskTracker: Developer Context Journal 📝
 
-TaskTracker is a lightweight, terminal-based task management tool designed for developers who want to track tasks alongside their code without leaving the terminal.
+[![npm version](https://badge.fury.io/js/tasktracker-cli.svg)](https://badge.fury.io/js/tasktracker-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js CI](https://github.com/tasktracker-cli/tasktracker/workflows/Node.js%20CI/badge.svg)](https://github.com/tasktracker-cli/tasktracker/actions)
 
-![TaskTracker Demo](docs/images/tasktracker-demo.png)
+**Your development memory across AI sessions.**
 
-## Key Features
+TaskTracker is a lightweight CLI tool that maintains context about your development work. It's designed for developers who use AI assistants and need to preserve project context across different sessions, tools, and time.
 
-- 📋 **Task Tracking**: Manage tasks with detailed information
-- 📱 **Simple Interface**: Clean terminal UI that's easy to use
-- 🔄 **Git Integration**: Track files and changes associated with tasks
-- 📊 **Task Statistics**: Get insights about your workload and progress
-- 🚀 **AI Integration**: Generate context for AI coding assistants
-- 🔄 **Command Patterns**: Consistent command syntax across all operations
-- 📦 **Modular Architecture**: Extensible design for easy customization
-- 🔄 **Plugin Support**: Extensible through custom modules
+## 🎯 **Why TaskTracker?**
 
-## Installation
+Every developer using AI assistants knows this pain:
+- Start new chat → Explain entire project context again
+- Switch AI tools → Lose all conversation history  
+- Take a break → Forget where you left off
+- Debug an issue → Can't remember what you already tried
 
-### Global Installation (Recommended)
+**TaskTracker solves this by being your persistent development memory.**
+
+## 🚀 **Quick Start**
 
 ```bash
+# Install globally
 npm install -g tasktracker-cli
-```
 
-After installation, initialize TaskTracker in your project:
-
-```bash
+# Initialize in your project
+cd your-project
 tt init
+
+# Set your project vision
+tt prd "Building a REST API for user management with JWT auth"
+
+# Start documenting your work
+tt j "Implemented user registration endpoint"
+tt j --type decision "Using bcrypt for password hashing"
+tt j --type blocker "JWT refresh token logic is complex"
+
+# Generate context for your AI
+tt c  # Quick context
+tt cf # Full context with history
 ```
 
-### Local Installation
+## 📖 **Core Features**
+
+### Development Journal
+Track your progress, decisions, and blockers:
+```bash
+tt j "Completed user authentication flow"
+tt j --type decision "Switching from MongoDB to PostgreSQL"
+tt j --type blocker "CORS issues with frontend"
+tt j --tags api,auth "Added rate limiting to login endpoint"
+```
+
+### PRD Management
+Parse and maintain your project requirements:
+```bash
+tt prd "Build a task management API with real-time updates"
+tt prd requirements.md  # Or from a file
+tt prd-show            # View parsed requirements
+```
+
+### AI Context Generation
+Generate rich context for any AI assistant:
+```bash
+tt c                    # Quick context (last day)
+tt cf                   # Full context (last 7 days)
+tt cf 14                # Custom timeframe
+tt cf --output ctx.md   # Save to file
+```
+
+### Search & Export
+Find and export your development history:
+```bash
+tt journal-search "authentication"     # Search entries
+tt journal-show --type decision       # Filter by type
+tt journal-export markdown            # Export journal
+```
+
+## 💡 **Real-World Usage**
+
+### Starting Your Day
+```bash
+# Get back up to speed
+tt c
+# Copy output to your AI assistant
+```
+
+### During Development
+```bash
+# Track progress
+tt j "Added user profile endpoints"
+
+# Document decisions
+tt j --type decision "Using Redis for session storage - built-in expiration"
+
+# Note blockers
+tt j --type blocker "WebSocket connection drops after 30 seconds"
+```
+
+### Debugging with AI
+```bash
+# Document the issue
+tt j --type blocker "Users can't login - 401 errors"
+
+# Add context
+tt j "Checked: JWT secret is correct, token format is valid"
+tt j "Suspecting: Token expiration or timezone issue"
+
+# Get focused context for AI
+tt cf 1  # Just today's context
+```
+
+## 📚 **All Commands**
+
+### Journal Commands
+- `tt journal "text"` (alias: `tt j`) - Add entry
+- `tt journal-show` (alias: `tt js`) - Show entries  
+- `tt journal-search "query"` - Search entries
+- `tt journal-export [format]` - Export journal
+
+### Context Commands  
+- `tt context-quick` (alias: `tt c`) - Quick context
+- `tt context-full [days]` (alias: `tt cf`) - Full context
+
+### PRD Commands
+- `tt prd "description"` - Set project requirements
+- `tt prd-show` - View current PRD
+- `tt prd-context` - Generate PRD context
+
+### Other Commands
+- `tt init` - Initialize TaskTracker
+- `tt stats` - Show project statistics
+- `tt help [command]` - Get help
+
+## 🔧 **Command Options**
+
+### Journal Options
+```bash
+tt j "text" --type [progress|decision|blocker|idea|context]
+tt j "text" --tags tag1,tag2,tag3
+tt j "text" --files file1.js,file2.py
+```
+
+### Filter Options
+```bash
+tt journal-show --type decision
+tt journal-show --tag architecture  
+tt journal-show --date 2024-01-15
+```
+
+### Output Options
+```bash
+tt cf --output context.md
+tt journal-export json --output backup.json
+```
+
+## 🎨 **What Makes TaskTracker Different**
+
+1. **Not Another Task Manager** - It's a context journal, not a todo list
+2. **AI-First Design** - Built specifically for AI-assisted development
+3. **Zero Friction** - Simple commands that fit your workflow
+4. **Local & Private** - Your data stays in your project
+
+## 🤝 **Integration Guide**
+
+See [AI Integration Guide](docs/AI_INTEGRATION_GUIDE.md) for detailed patterns and workflows with:
+- Cursor
+- ChatGPT / Claude
+- GitHub Copilot
+- Custom integrations
+
+## 📈 **Best Practices**
+
+1. **Be Specific**: "Fixed null check in auth middleware" > "fixed bug"
+2. **Document Why**: Include reasoning in decisions
+3. **Tag Consistently**: Use tags to group related work
+4. **Regular Context**: Regenerate context at session start
+
+## 🚧 **Current Status**
+
+**Version 3.0** - Recently refactored from a task manager to a focused developer context journal.
+
+### What's Working
+- ✅ All journal functionality (add, show, search, export)
+- ✅ PRD parsing and management
+- ✅ AI context generation (quick & full)
+- ✅ Proper CLI argument parsing
+- ✅ Clean, maintainable codebase
+- ✅ Comprehensive test coverage
+
+### Known Limitations
+- No cloud sync (by design - local only)
+- No team features (focused on individual developers)
+- Basic search (no fuzzy matching yet)
+- Limited to CLI (no GUI planned)
+
+## 🛠️ **Development**
 
 ```bash
-npm install tasktracker-cli --save-dev
+# Clone and install
+git clone https://github.com/tasktracker-cli/tasktracker.git
+cd tasktracker
+npm install
 
-# Initialize TaskTracker
-npx tt init
+# Run tests
+npm test
+
+# Lint code
+npm run lint:check
+npm run lint:fix
 ```
 
-## Usage
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 
-TaskTracker uses `tt` as the primary command. The legacy `tasktracker` command is maintained for backward compatibility but may be deprecated in future versions.
+## 🤝 **Contributing**
 
-## Quick Start
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-Create a task:
-```bash
-tt quick "Implement user authentication" feature
-```
+### Quick Contribution Steps
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Submit a pull request
 
-Mark a task as in-progress:
-```bash
-tt update 1 status in-progress
-```
+## 📊 **Project Stats**
 
-View all tasks:
-```bash
-tt list
-```
+- 🧪 **28 tests** - All passing
+- 🎯 **Zero lint issues** - Clean codebase
+- 📦 **Lightweight** - Minimal dependencies
+- 🚀 **Fast** - Optimized for developer workflow
 
-Link a source file to the task:
-```bash
-tt update 1 add-file src/components/Navigation.js
-```
+## 🐛 **Issues & Support**
 
-Complete the task:
-```bash
-tt update 1 status done
-```
+- **Bug Reports**: [GitHub Issues](https://github.com/tasktracker-cli/tasktracker/issues)
+- **Feature Requests**: [GitHub Discussions](https://github.com/tasktracker-cli/tasktracker/discussions)
+- **Documentation**: [docs/](docs/) directory
 
-### Filtering Tasks
+## 📄 **License**
 
-```bash
-# Filter by status
-tt list todo
+MIT License - see [LICENSE](LICENSE) file for details.
 
-# Filter by category 
-tt list --category=feature
+## 🙏 **Acknowledgments**
 
-# Filter by priority
-tt list --priority=p1-high
+Built by developers, for developers who use AI assistants.
 
-# Search by keyword
-tt list --keyword=navigation
-```
+Special thanks to all [contributors](https://github.com/tasktracker-cli/tasktracker/contributors) who help make TaskTracker better.
 
-### Integration with AI Assistants
+---
 
-Generate context for AI tools:
+**Stop re-explaining your project. Start preserving context.**
 
-```bash
-# Generate AI-friendly context
-tt ai-context
-
-# Generate context for a specific task
-tt ai-context 2
-```
-
-## Command Reference
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| `tt init` | Initialize TaskTracker | `tt init` |
-| `tt quick` | Create a task quickly | `tt quick "Fix bug" bugfix` |
-| `tt add` | Add a task (interactive) | `tt add` |
-| `tt list` | List all tasks | `tt list` |
-| `tt view` | View task details | `tt view 1` |
-| `tt update` | Update a task | `tt update 1 status in-progress` |
-| `tt delete` | Delete a task | `tt delete 1` |
-| `tt changes` | See recent file changes | `tt changes` |
-| `tt stats` | Show project statistics | `tt stats` |
-| `tt ai-context` | Generate AI context | `tt ai-context 1` |
-
-## Advanced Features
-
-TaskTracker includes advanced commands for power users:
-
-### Custom Fields
-
-You can add custom fields to any task:
-
-```bash
-tt update 3 custom story-points 5
-tt update 3 custom assignee "Jane"
-tt update 3 custom due-date "2023-12-15"
-```
-
-### Task Dependencies
-
-Define dependencies between tasks:
-
-```bash
-# Task 2 depends on Task 1
-tt update 2 depends-on 1
-
-# View dependency graph
-tt view 2 --deps
-```
-
-## Customization
-
-You can customize task statuses and categories in `.tasktracker/config.json`:
-
-## Need More Help?
-
-Run `tt help` to see all available commands and options.
-
-For detailed documentation, see the [docs directory](docs/).
-
-## License
-
-MIT
-
-## Recent Improvements
-
-This version includes several usability enhancements:
-
-- 📦 **Modular Architecture**: Complete refactoring from monolithic to modular design
-- 📊 **Improved Statistics**: Quick task stats with `tt stats`
-- 🎨 **Better Visualization**: Color-coded categories for better readability
-- ⌨️ **Shell Completion**: Command auto-completion for bash/zsh (see docs/SHELL-COMPLETION.md)
-- 🚀 **Loading Animations**: Visual feedback during initialization
-- 📋 **Better Table Formatting**: Improved alignment of task tables
-- 📝 **Streamlined Docs**: More concise, example-focused documentation
+[⭐ Star us on GitHub](https://github.com/tasktracker-cli/tasktracker) | [📦 Install from npm](https://www.npmjs.com/package/tasktracker-cli) | [📖 Read the docs](docs/)

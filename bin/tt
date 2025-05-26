@@ -21,9 +21,10 @@ const coreDir = path.join(libDir, 'core');
 // Import core modules
 const { parseArgs } = require('../lib/core/cli-parser');
 const { output } = require('../lib/core/formatting');
-const commandRegistry = require('../lib/commands/index');
+// Import the actual registry and the module that registers commands
+const commandRegistry = require('../lib/core/command-registry');
+const commandInitializer = require('../lib/commands/index');
 const help = require('../lib/commands/help');
-const cliSecurity = require('../lib/utils/cli-security');
 
 /**
  * Loading animation module
@@ -83,8 +84,10 @@ try {
   // Continue without performance monitoring
 }
 
-// Initialize all command paths
-commandRegistry.initCommandPaths(appRoot);
+// Initialize command paths and register commands
+commandInitializer.initCommandPaths(appRoot);
+// Explicitly register all commands with the registry
+commandInitializer.registerAllCommands();
 
 // Process command line arguments
 const args = process.argv.slice(2);
@@ -92,7 +95,8 @@ const args = process.argv.slice(2);
 // Special case - handle --help and -h flags as commands
 if (args.length > 0 && (args[0] === '--help' || args[0] === '-h')) {
   const helpTopic = args.length > 1 ? args[1] : null;
-  help.showHelp(helpTopic);
+  // Pass the arguments array to showHelp
+  help.showHelp(args.slice(1)); 
   process.exit(0);
 }
 
@@ -107,65 +111,35 @@ if (args.length > 0 && (args[0] === '--version' || args[0] === '-v')) {
   process.exit(0);
 }
 
-// Perform initial security check on raw arguments
-const securityCheck = cliSecurity.sanitizeArgs(args, { skipCommandValidation: true });
-if (!securityCheck.valid) {
-  output('⚠️ Security warning: Potentially unsafe command arguments detected', 'warning');
-  
-  // Check for any critical security issues that should block execution
-  const criticalIssues = securityCheck.validationIssues.filter(issue => 
-    issue.includes('dangerous content') || 
-    issue.includes('path traversal') ||
-    issue.includes('Invalid file path')
-  );
-  
-  if (criticalIssues.length > 0) {
-    output('❌ Command execution blocked due to security concerns:', 'error');
-    criticalIssues.forEach(issue => {
-      output(`  - ${issue}`, 'error');
-    });
-    output('Please check your command arguments and try again.', 'error');
-    process.exit(1);
-  }
-}
-
 // Parse arguments with built-in validation
-const command = args.length > 0 ? args[0] : null;
+const commandName = args.length > 0 ? args[0] : null;
 const { commandArgs, options: globalOptions, validationIssues, valid } = parseArgs(args.slice(1), {
-  skipCommandValidation: true
+  skipCommandValidation: true // Let the registry handle unknown commands
 });
 
 // Start command execution timing
 let commandTimer;
 if (perfMonitor) {
-  commandTimer = perfMonitor.startTimer(`command_${command || 'help'}`);
+  commandTimer = perfMonitor.startTimer(`command_${commandName || 'help'}`);
 }
 
 // Show help if no command is provided
-if (!command) {
-  help.showHelp(null, globalOptions);
+if (!commandName) {
+  help.showHelp([], globalOptions); // Use the help module directly
   process.exit(0);
 }
 
 // Special case for help command directly
-if (command === 'help') {
-  const helpTopic = commandArgs[0];
-  help.showHelp(helpTopic, globalOptions);
+if (commandName === 'help') {
+  help.showHelp(commandArgs, globalOptions); // Use the help module directly
   process.exit(0);
 }
 
-// Get the command handler
-const commandHandler = commandRegistry.getCommand(command);
+// Get the command handler from the central registry
+const commandHandler = commandRegistry.getCommand(commandName);
 
 if (commandHandler) {
   try {
-    // Security warnings are actually ok if the command exists and can be handled
-    // Clear security warning output if it's just "Invalid command" but we have a valid handler
-    if (validationIssues && validationIssues.length === 1 && 
-        validationIssues[0].includes('Invalid command') && command) {
-      // We can safely ignore this warning
-    }
-    
     // Execute the command with sanitized arguments and options
     const result = commandHandler(commandArgs, globalOptions);
     
@@ -173,7 +147,7 @@ if (commandHandler) {
     if (result instanceof Promise) {
       result
         .then(res => {
-          if (res && !res.success) {
+          if (res && res.success === false) { // Check for explicit false success
             process.exit(1);
           }
           process.exit(0);
@@ -184,7 +158,7 @@ if (commandHandler) {
         });
     } else {
       // Handle synchronous result
-      if (result && !result.success) {
+      if (result && result.success === false) { // Check for explicit false success
         process.exit(1);
       }
       process.exit(0);
@@ -194,8 +168,8 @@ if (commandHandler) {
     process.exit(1);
   }
 } else {
-  output(`❌ Unknown command: ${command}`, 'error', { globalOptions });
-  help.showHelp(null, globalOptions);
+  output(`❌ Unknown command: ${commandName}`, 'error', { globalOptions });
+  help.showHelp([], globalOptions); // Show general help for unknown command
   process.exit(1);
 }
 

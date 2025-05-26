@@ -10,12 +10,15 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { describe, it, before, after } = require('mocha');
-const sinon = require('sinon');
 
 // Modules to test
 const taskManager = require('../../lib/core/task-manager');
-const configManager = require('../../lib/core/config-manager');
-const commandRegistry = require('../../lib/commands/index');
+const configManager = require('../../lib/core/unified-config-manager');
+const commandRegistry = require('../../lib/core/command-registry');
+const commandIndex = require('../../lib/commands/index');
+
+// We need to dynamically import sinon since it's an ESM module
+let sinon;
 
 // Performance testing utilities
 function measureTime(fn, iterations = 1) {
@@ -33,13 +36,21 @@ describe('Performance Tests', function() {
   // Extend timeout for performance tests
   this.timeout(10000);
   
-  const sandbox = sinon.createSandbox();
+  let sandbox;
   
-  before(() => {
-    // Initialize paths
+  before(async () => {
+    // Dynamically import sinon using ESM import
+    const sinonModule = await import('sinon');
+    sinon = sinonModule.default;
+    
+    sandbox = sinon.createSandbox();
+    
+    // Initialize paths for core modules
     taskManager.initPaths(path.join(__dirname, '../..'));
     configManager.initPaths(path.join(__dirname, '../..'));
-    commandRegistry.initCommandPaths(path.join(__dirname, '../..'));
+    // Initialize paths for command modules and register commands
+    commandIndex.initCommandPaths(path.join(__dirname, '../..'));
+    commandIndex.registerAllCommands();
     
     // Stub file operations to avoid disk I/O interference
     sandbox.stub(fs, 'readFileSync').callsFake((path) => {

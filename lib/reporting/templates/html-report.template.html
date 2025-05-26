@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskTracker Statistics Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f7fa;
+    }
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 15px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background-color: #f8faff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .stat-value {
+      font-size: 2em;
+      font-weight: bold;
+      color: #3498db;
+      margin: 10px 0;
+    }
+    .chart-container {
+      height: 300px;
+      margin: 20px 0;
+    }
+    .flex-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .flex-item {
+      flex: 1;
+      min-width: 300px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e1e1e1;
+    }
+    th {
+      background-color: #f5f7fa;
+      font-weight: 600;
+    }
+    tr:hover {
+      background-color: #f5f7fa;
+    }
+    .footer {
+      text-align: center;
+      font-size: 0.9em;
+      color: #7f8c8d;
+      margin-top: 30px;
+    }
+    .progress-bar {
+      height: 20px;
+      background-color: #e0e6ed;
+      border-radius: 10px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #3498db;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TaskTracker Statistics Report</h1>
+    <p style="text-align: center;">Generated on {{formatDate timestamp}}</p>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Tasks</h3>
+        <div class="stat-value">{{taskStats.total}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Completion</h3>
+        <div class="stat-value">{{taskStats.completionPercentage}}%</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: {{taskStats.completionPercentage}}%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Files</h3>
+        <div class="stat-value">{{fileStats.totalFiles}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Lines</h3>
+        <div class="stat-value">{{formatNumber fileStats.totalLines}}</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="container">
+    <h2>Task Statistics</h2>
+    
+    <div class="flex-container">
+      <div class="flex-item">
+        <h3>Tasks by Status</h3>
+        <div class="chart-container">
+          <canvas id="taskStatusChart"></canvas>
+        </div>
+      </div>
+      <div class="flex-item">
+        <h3>Tasks by Category</h3>
+        <div class="chart-container">
+          <canvas id="taskCategoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <h3>Tasks by Priority</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Priority</th>
+          <th>Count</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each taskStats.byPriority}}
+        <tr>
+          <td>{{@key}}</td>
+          <td>{{this}}</td>
+          <td>{{percentage this ../taskStats.total}}%</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="container">
+    <h2>Git Statistics</h2>
+    
+    {{#if gitStats.isGitRepo}}
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Commits</h3>
+        <div class="stat-value">{{gitStats.stats.totalCommits}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Branches</h3>
+        <div class="stat-value">{{gitStats.stats.branchCount}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Contributors</h3>
+        <div class="stat-value">{{gitStats.stats.contributorCount}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Merges</h3>
+        <div class="stat-value">{{gitStats.stats.mergeCount}}</div>
+      </div>
+    </div>
+    <p><strong>Current Branch:</strong> {{gitStats.stats.currentBranch}}</p>
+    <p><strong>Latest Commit:</strong> {{gitStats.stats.latestCommit}}</p>
+    {{else}}
+    <p>Not a Git repository</p>
+    {{/if}}
+  </div>
+  
+  <div class="container">
+    <h2>File Statistics</h2>
+    
+    <div class="flex-container">
+      <div class="flex-item">
+        <h3>Files by Extension</h3>
+        <div class="chart-container">
+          <canvas id="fileExtensionChart"></canvas>
+        </div>
+      </div>
+      <div class="flex-item">
+        <h3>Largest Files</h3>
+        <div class="chart-container">
+          <canvas id="fileSizeChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <h3>Files by Extension Detail</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Extension</th>
+          <th>Files</th>
+          <th>Lines</th>
+          <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each fileStats.byExtension}}
+        <tr>
+          <td>{{@key}}</td>
+          <td>{{this.count}}</td>
+          <td>{{formatNumber this.lines}}</td>
+          <td>{{formatSize this.size}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="footer">
+    <p>Generated by TaskTracker v{{version}} on {{formatDate timestamp}}</p>
+  </div>
+  
+  <script>
+    // Task Status Chart
+    const statusCtx = document.getElementById('taskStatusChart').getContext('2d');
+    new Chart(statusCtx, {
+      type: 'pie',
+      data: {
+        labels: [{{#each taskStats.byStatus}}'{{@key}}'{{#unless @last}},{{/unless}}{{/each}}],
+        datasets: [{
+          data: [{{#each taskStats.byStatus}}{{this}}{{#unless @last}},{{/unless}}{{/each}}],
+          backgroundColor: getRandomColors({{objectLength taskStats.byStatus}})
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    });
+    
+    // Task Category Chart
+    const categoryCtx = document.getElementById('taskCategoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+      type: 'pie',
+      data: {
+        labels: [{{#each taskStats.byCategory}}'{{@key}}'{{#unless @last}},{{/unless}}{{/each}}],
+        datasets: [{
+          data: [{{#each taskStats.byCategory}}{{this}}{{#unless @last}},{{/unless}}{{/each}}],
+          backgroundColor: getRandomColors({{objectLength taskStats.byCategory}})
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    });
+    
+    // File Extension Chart
+    const fileExtCtx = document.getElementById('fileExtensionChart').getContext('2d');
+    new Chart(fileExtCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [{{#each fileStats.byExtension}}'{{@key}}'{{#unless @last}},{{/unless}}{{/each}}],
+        datasets: [{
+          data: [{{#each fileStats.byExtension}}{{this.count}}{{#unless @last}},{{/unless}}{{/each}}],
+          backgroundColor: getRandomColors({{objectLength fileStats.byExtension}})
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    });
+    
+    // File Size Chart
+    const fileSizeCtx = document.getElementById('fileSizeChart').getContext('2d');
+    new Chart(fileSizeCtx, {
+      type: 'bar',
+      data: {
+        labels: [{{#each fileStats.largestFiles}}'{{filename this.file}}'{{#unless @last}},{{/unless}}{{/each}}],
+        datasets: [{
+          label: 'File Size (bytes)',
+          data: [{{#each fileStats.largestFiles}}{{this.size}}{{#unless @last}},{{/unless}}{{/each}}],
+          backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+    
+    // Helper function to generate random colors
+    function getRandomColors(count) {
+      const colors = [];
+      for (let i = 0; i < count; i++) {
+        const hue = (i * 137) % 360; // Use golden angle for better distribution
+        colors.push(`hsl(${hue}, 70%, 60%)`);
+      }
+      return colors;
+    }
+  </script>
+</body>
+</html>
