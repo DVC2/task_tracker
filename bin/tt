@@ -26,64 +26,6 @@ const commandRegistry = require('../lib/core/command-registry');
 const commandInitializer = require('../lib/commands/index');
 const help = require('../lib/commands/help');
 
-/**
- * Loading animation module
- * Shows a spinner animation for operations that take time
- */
-class LoadingSpinner {
-  constructor() {
-    this.frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-    this.interval = null;
-    this.message = '';
-    this.frameIndex = 0;
-  }
-
-  start(message = 'Loading...') {
-    this.message = message;
-    this.frameIndex = 0;
-    
-    // Don't start animation in non-interactive mode
-    if (!process.stdout.isTTY) return;
-    
-    clearInterval(this.interval);
-    process.stdout.write(`${this.frames[0]} ${this.message}`);
-    
-    this.interval = setInterval(() => {
-      this.frameIndex = (this.frameIndex + 1) % this.frames.length;
-      process.stdout.clearLine(0);
-      process.stdout.cursorTo(0);
-      process.stdout.write(`${this.frames[this.frameIndex]} ${this.message}`);
-    }, 80);
-  }
-
-  stop(finalMessage = '') {
-    if (!process.stdout.isTTY) {
-      if (finalMessage) console.log(finalMessage);
-      return;
-    }
-    
-    clearInterval(this.interval);
-    process.stdout.clearLine(0);
-    process.stdout.cursorTo(0);
-    if (finalMessage) console.log(finalMessage);
-  }
-}
-
-// Create a spinner instance
-const spinner = new LoadingSpinner();
-
-// Initialize performance monitoring if available
-let perfMonitor;
-try {
-  perfMonitor = require('../lib/core/perf-monitor');
-  perfMonitor.init({
-    enabled: process.env.TASKTRACKER_PERF_MONITOR !== 'false',
-    logToConsole: process.env.TASKTRACKER_PERF_LOG === 'true'
-  });
-} catch (error) {
-  // Continue without performance monitoring
-}
-
 // Initialize command paths and register commands
 commandInitializer.initCommandPaths(appRoot);
 // Explicitly register all commands with the registry
@@ -116,12 +58,6 @@ const commandName = args.length > 0 ? args[0] : null;
 const { commandArgs, options: globalOptions, validationIssues, valid } = parseArgs(args.slice(1), {
   skipCommandValidation: true // Let the registry handle unknown commands
 });
-
-// Start command execution timing
-let commandTimer;
-if (perfMonitor) {
-  commandTimer = perfMonitor.startTimer(`command_${commandName || 'help'}`);
-}
 
 // Show help if no command is provided
 if (!commandName) {
@@ -172,17 +108,3 @@ if (commandHandler) {
   help.showHelp([], globalOptions); // Show general help for unknown command
   process.exit(1);
 }
-
-// Cleanup function for process exit
-function cleanup() {
-  if (commandTimer) commandTimer();
-  if (perfMonitor) perfMonitor.shutdown();
-  spinner.stop();
-}
-
-// Register cleanup handlers
-process.on('exit', cleanup);
-process.on('SIGINT', () => {
-  cleanup();
-  process.exit(1);
-});
