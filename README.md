@@ -1,6 +1,7 @@
 # TaskTracker: Developer Context Journal 📝
 
-[![npm version](https://badge.fury.io/js/@dvc2%2Ftasktracker-cli.svg)](https://badge.fury.io/js/@dvc2%2Ftasktracker-cli)
+[![npm version](https://badge.fury.io/js/@dvc2%2Ftasktracker-cli.svg)](https://www.npmjs.com/package/@dvc2/tasktracker-cli)
+[![npm downloads](https://img.shields.io/npm/dm/@dvc2/tasktracker-cli.svg)](https://www.npmjs.com/package/@dvc2/tasktracker-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js CI](https://github.com/DVC2/task_tracker/actions/workflows/test.yml/badge.svg)](https://github.com/DVC2/task_tracker/actions/workflows/test.yml)
 
@@ -41,15 +42,37 @@ tt c  # Quick context
 tt cf # Full context with history
 ```
 
+## 🚀 **Git Integration (NEW!)**
+
+Seamlessly capture your development history:
+```bash
+# Install git hooks for auto-journaling
+tt git-install-hook
+
+# Now every commit automatically creates a journal entry!
+git commit -m "feat: Add user authentication"
+# → Automatically journaled with tags: git, feat, main
+
+# Import recent commits
+tt git-sync 10
+
+# Toggle auto-prompting
+tt git-auto off  # Disable context prompting
+```
+
 ## 📖 **Core Features**
 
 ### Development Journal
 Track your progress, decisions, and blockers:
 ```bash
-tt j "Completed user authentication flow"
-tt j --type decision "Switching from MongoDB to PostgreSQL"
-tt j --type blocker "CORS issues with frontend"
-tt j --tags api,auth "Added rate limiting to login endpoint"
+# Quick aliases for common entries
+tt done "Completed user authentication flow"
+tt decided "Switching from MongoDB to PostgreSQL"
+tt blocked "CORS issues with frontend"
+tt til "Redis connection pooling improves performance"
+
+# Or use the full command
+tt j "Added rate limiting to login endpoint" --tags api,auth
 ```
 
 ### PRD Management
@@ -89,19 +112,19 @@ tt c
 ### During Development
 ```bash
 # Track progress
-tt j "Added user profile endpoints"
+tt done "Added user profile endpoints"
 
 # Document decisions
-tt j --type decision "Using Redis for session storage - built-in expiration"
+tt decided "Using Redis for session storage - built-in expiration"
 
 # Note blockers
-tt j --type blocker "WebSocket connection drops after 30 seconds"
+tt blocked "WebSocket connection drops after 30 seconds"
 ```
 
 ### Debugging with AI
 ```bash
 # Document the issue
-tt j --type blocker "Users can't login - 401 errors"
+tt blocked "Users can't login - 401 errors"
 
 # Add context
 tt j "Checked: JWT secret is correct, token format is valid"
@@ -118,6 +141,18 @@ tt cf 1  # Just today's context
 - `tt journal-show` (alias: `tt js`) - Show entries  
 - `tt journal-search "query"` - Search entries
 - `tt journal-export [format]` - Export journal
+
+### Productivity Aliases
+- `tt done "text"` - Quick progress entry
+- `tt decided "text"` - Quick decision entry
+- `tt blocked "text"` - Quick blocker entry
+- `tt til "text"` - Quick learning entry
+
+### Git Integration
+- `tt git-install-hook` - Install auto-journaling hook
+- `tt git-sync [count]` - Import recent commits
+- `tt git-auto [on|off]` - Toggle auto-prompting
+- `tt git-status` - Show integration status
 
 ### Context Commands  
 - `tt context-quick` (alias: `tt c`) - Quick context
@@ -157,7 +192,7 @@ tt journal-export json --output backup.json
 
 ## 🎨 **What Makes TaskTracker Different**
 
-1. **Not Another Task Manager** - It's a context journal, not a todo list
+1. **Git Integration** - Automatically captures your development history
 2. **AI-First Design** - Built specifically for AI-assisted development
 3. **Zero Friction** - Simple commands that fit your workflow
 4. **Local & Private** - Your data stays in your project
@@ -185,7 +220,8 @@ See [AI Integration Guide](docs/AI_INTEGRATION_GUIDE.md) for detailed patterns a
 - ✅ All journal functionality (add, show, search, export)
 - ✅ PRD parsing and management
 - ✅ AI context generation (quick & full)
-- ✅ Proper CLI argument parsing
+- ✅ Git integration with auto-journaling
+- ✅ Productivity aliases for quick entries
 - ✅ Clean, maintainable codebase
 - ✅ Comprehensive test coverage
 
@@ -205,45 +241,25 @@ TaskTracker stores all data locally in the `.tasktracker/` directory. This direc
 - Never commit real journal data to public repositories
 - Use the sanitized examples in `examples/` for demos or documentation
 
-If you need to share examples, use the sanitized data in the `examples/` directory instead of your real journal entries.
+## 📚 **Examples & Documentation**
 
-## 🛠️ **Development**
-
-```bash
-# Clone and install
-git clone https://github.com/tasktracker-cli/tasktracker.git
-cd tasktracker
-npm install
-
-# Run tests
-npm test
-
-# Lint code
-npm run lint:check
-npm run lint:fix
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
+Check out the [examples directory](examples/) for:
+- Sample journal entries
+- Example configurations
+- Usage patterns
+- Best practices
 
 ## 🤝 **Contributing**
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Quick Contribution Steps
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with tests
-4. Submit a pull request
-
-## 🐛 **Issues & Support**
-
-- **Bug Reports**: [GitHub Issues](https://github.com/tasktracker-cli/tasktracker/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/tasktracker-cli/tasktracker/discussions)
-- **Documentation**: [docs/](docs/) directory
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development setup
+- Code style guide
+- Pull request process
+- Testing requirements
 
 ## 📄 **License**
 
-MIT License - see [LICENSE](LICENSE) file for details.
+TaskTracker is [MIT licensed](LICENSE).
 
 ## 🙏 **Acknowledgments**
 

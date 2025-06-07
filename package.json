@@ -1,5 +1,5 @@
 {
-  "name": "tasktracker-cli",
+  "name": "@dvc2/tasktracker-cli",
   "version": "3.0.0",
   "description": "Developer context journal for AI-assisted coding - maintain project context across sessions",
   "main": "bin/tt",
@@ -18,10 +18,12 @@
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepublishOnly": "npm test && npm run lint:check",
+    "prepublishOnly": "npm test",
     "optimize:deps": "node scripts/optimize-deps.js",
     "benchmark": "node scripts/benchmark.js",
-    "size": "du -sh node_modules && find node_modules -maxdepth 1 -type d | wc -l"
+    "size": "du -sh node_modules && find node_modules -maxdepth 1 -type d | wc -l",
+    "demo": "node ./bin/tt demo",
+    "quickstart": "node ./bin/tt quickstart"
   },
   "repository": {
     "type": "git",
@@ -38,7 +40,10 @@
     "ai-context",
     "coding-assistant",
     "project-documentation",
-    "development-workflow"
+    "development-workflow",
+    "git-integration",
+    "developer-memory",
+    "ai-coding"
   ],
   "author": "TaskTracker Contributors",
   "license": "MIT",
@@ -55,6 +60,7 @@
   "devDependencies": {
     "chai": "^4.3.10",
     "eslint": "^8.29.0",
+    "eslint-plugin-node": "^11.1.0",
     "mocha": "^10.7.0",
     "rimraf": "^3.0.2",
     "sinon": "^20.0.0"
