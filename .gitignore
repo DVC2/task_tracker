@@ -30,20 +30,44 @@ test-results/
 *.swo
 .DS_Store
 
-# TaskTracker user data
+# TaskTracker user data (contains personal journal entries)
 .tasktracker/
+tasktracker-data/
+
+# Personal files
+TODO.md
+NOTES.md
+personal/
+*.personal.*
 
 # Logs & Temp
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 tmp/
 temp/
 *.tmp
 *.bak
+
+# OS files  
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
 
 # Security (never commit these)
 *.pem
 *.key
 *credentials*
 *secret*
-*private* 
+*private*
+.env.local
+config.local.*
+
+# Generated test files
+quick-context.md
+full-context.md
+context.md
+prd-context.md 

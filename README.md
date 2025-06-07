@@ -1,6 +1,6 @@
 # TaskTracker: Developer Context Journal 📝
 
-[![npm version](https://badge.fury.io/js/tasktracker-cli.svg)](https://badge.fury.io/js/tasktracker-cli)
+[![npm version](https://badge.fury.io/js/@dvc2%2Ftasktracker-cli.svg)](https://badge.fury.io/js/@dvc2%2Ftasktracker-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js CI](https://github.com/DVC2/task_tracker/actions/workflows/test.yml/badge.svg)](https://github.com/DVC2/task_tracker/actions/workflows/test.yml)
 
@@ -22,7 +22,7 @@ Every developer using AI assistants knows this pain:
 
 ```bash
 # Install globally
-npm install -g tasktracker-cli
+npm install -g @dvc2/tasktracker-cli
 
 # Initialize in your project
 cd your-project
@@ -194,6 +194,18 @@ See [AI Integration Guide](docs/AI_INTEGRATION_GUIDE.md) for detailed patterns a
 - No team features (focused on individual developers)
 - Basic search (no fuzzy matching yet)
 - Limited to CLI (no GUI planned)
+
+## 🔒 **Security & Privacy**
+
+TaskTracker stores all data locally in the `.tasktracker/` directory. This directory contains your development journal and should **never** be committed to version control.
+
+⚠️ **Important Security Notes:**
+- Your journal entries are stored locally and privately
+- The `.gitignore` automatically excludes `.tasktracker/` directories  
+- Never commit real journal data to public repositories
+- Use the sanitized examples in `examples/` for demos or documentation
+
+If you need to share examples, use the sanitized data in the `examples/` directory instead of your real journal entries.
 
 ## 🛠️ **Development**
 
