@@ -4,7 +4,7 @@ This directory contains **sanitized example data** to demonstrate TaskTracker's 
 
 ## What's Included
 
-### `.tasktracker/journal/entries.json`
+### `tasktracker-example-data/journal/entries.json`
 Example journal entries showing different types of development activities:
 - **Progress updates**: Feature implementation, bug fixes
 - **Decisions**: Architecture choices, technology decisions  
@@ -12,7 +12,7 @@ Example journal entries showing different types of development activities:
 - **Learning**: TIL (Today I Learned) entries
 - **Git integration**: Auto-journaled commits with metadata
 
-### `.tasktracker/config.json`
+### `tasktracker-example-data/config.json`
 Example configuration showing:
 - Project settings
 - Git integration options
@@ -23,7 +23,7 @@ Example configuration showing:
 
 1. **Copy to your project**:
    ```bash
-   cp -r examples/.tasktracker/ your-project/
+   cp -r examples/tasktracker-example-data/ your-project/.tasktracker/
    ```
 
 2. **Generate context from examples**:

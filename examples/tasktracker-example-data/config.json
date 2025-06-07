@@ -1,0 +1,16 @@
+{
+  "projectName": "Example API Project",
+  "gitIntegration": true,
+  "autoPrompting": true,
+  "contextSettings": {
+    "defaultDays": 7,
+    "includeFiles": true,
+    "includeTags": true
+  },
+  "journalSettings": {
+    "defaultType": "progress",
+    "sessionTracking": true
+  },
+  "created": "2024-01-15T09:00:00.000Z",
+  "version": "3.0.0"
+} 

@@ -1,0 +1,96 @@
+[
+  {
+    "id": 1700000000000,
+    "timestamp": "2024-01-15T09:00:00.000Z",
+    "type": "progress",
+    "content": "Initial project setup - configured authentication system with JWT tokens",
+    "tags": ["setup", "auth", "jwt"],
+    "files": ["src/auth/index.js", "src/middleware/auth.js"],
+    "session": "2024-01-15-09"
+  },
+  {
+    "id": 1700000001000,
+    "timestamp": "2024-01-15T10:30:00.000Z",
+    "type": "decision",
+    "content": "Decided to use PostgreSQL over MongoDB for better relational data handling and ACID compliance",
+    "tags": ["database", "architecture"],
+    "files": ["config/database.js"],
+    "session": "2024-01-15-09"
+  },
+  {
+    "id": 1700000002000,
+    "timestamp": "2024-01-15T14:15:00.000Z",
+    "type": "blocker",
+    "content": "CORS issues preventing frontend from accessing API endpoints - need to configure proper origins",
+    "tags": ["cors", "api", "frontend"],
+    "files": ["src/app.js"],
+    "session": "2024-01-15-14"
+  },
+  {
+    "id": 1700000003000,
+    "timestamp": "2024-01-15T15:45:00.000Z",
+    "type": "progress",
+    "content": "Fixed CORS issue by adding dynamic origin configuration based on environment",
+    "tags": ["cors", "fix", "deployment"],
+    "files": ["src/middleware/cors.js"],
+    "session": "2024-01-15-14"
+  },
+  {
+    "id": 1700000004000,
+    "timestamp": "2024-01-16T09:00:00.000Z",
+    "type": "progress",
+    "content": "Implemented user registration and login endpoints with password hashing",
+    "tags": ["auth", "endpoints", "security"],
+    "files": ["src/routes/auth.js", "src/utils/hash.js"],
+    "session": "2024-01-16-09"
+  },
+  {
+    "id": 1700000005000,
+    "timestamp": "2024-01-16T11:30:00.000Z",
+    "type": "decision",
+    "content": "Using Redis for session storage instead of in-memory - better for horizontal scaling",
+    "tags": ["redis", "sessions", "scaling"],
+    "files": ["src/config/redis.js"],
+    "session": "2024-01-16-09"
+  },
+  {
+    "id": 1700000006000,
+    "timestamp": "2024-01-16T16:20:00.000Z",
+    "type": "learning",
+    "content": "TIL: Redis connection pooling significantly improves performance under load",
+    "tags": ["redis", "performance", "til"],
+    "files": [],
+    "session": "2024-01-16-16"
+  },
+  {
+    "content": "Git feat: Add user profile management endpoints",
+    "type": "progress",
+    "tags": ["git", "feat", "feature/user-profiles"],
+    "files": ["src/routes/profile.js", "src/models/User.js"],
+    "timestamp": 1700000007000,
+    "metadata": {
+      "gitHash": "abc12345",
+      "author": "ExampleDev"
+    }
+  },
+  {
+    "content": "Git fix: Handle edge case where user has no profile picture",
+    "type": "progress", 
+    "tags": ["git", "fix", "main"],
+    "files": ["src/utils/avatar.js"],
+    "timestamp": 1700000008000,
+    "metadata": {
+      "gitHash": "def67890",
+      "author": "ExampleDev"
+    }
+  },
+  {
+    "id": 1700000009000,
+    "timestamp": "2024-01-17T10:00:00.000Z",
+    "type": "context",
+    "content": "Working on email notification system - considering using SendGrid vs AWS SES for transactional emails",
+    "tags": ["email", "notifications", "integration"],
+    "files": ["src/services/email.js"],
+    "session": "2024-01-17-10"
+  }
+] 
